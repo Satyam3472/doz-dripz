@@ -1,7 +1,9 @@
 "use client"
 import { Search, Play, Download, Share2, Pause, ShoppingBag } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 import MediaPlayer from "./MediaPlayer";
+import LicensingModal from "./LicensingModal";
 import { usePlayerStore } from "@/stores/player.store";
 import { useCartStore } from "@/stores/cart.store";
 
@@ -13,6 +15,9 @@ export default function TracksPage({ initialTracks }: AllTracksProps) {
     const { play, pause, currentTrack, isPlaying } = usePlayerStore();
     const { addItem } = useCartStore();
 
+    const [modalOpen, setModalOpen] = useState(false);
+    const [selectedTrack, setSelectedTrack] = useState<any>(null);
+
     // Use the passed tracks
     const tracks = initialTracks;
 
@@ -22,6 +27,11 @@ export default function TracksPage({ initialTracks }: AllTracksProps) {
         } else {
             play(track);
         }
+    };
+
+    const openLicensingModal = (track: any) => {
+        setSelectedTrack(track);
+        setModalOpen(true);
     };
 
     return (
@@ -141,18 +151,10 @@ export default function TracksPage({ initialTracks }: AllTracksProps) {
                                             <Share2 size={16} />
                                         </button>
                                         <button
-                                            onClick={() => addItem({
-                                                trackId: track.id,
-                                                licenseId: 1,
-                                                price: track.price,
-                                                title: track.title,
-                                                artist: track.artist,
-                                                cover: track.cover,
-                                                licenseName: "MP3 Lease"
-                                            })}
+                                            onClick={() => openLicensingModal(track)}
                                             className="flex h-9 items-center gap-1.5 rounded bg-white px-4 text-xs font-bold text-black hover:bg-gray-200 transition-colors"
                                         >
-                                            <ShoppingBag size={14} /> <span className="hidden md:inline">${track.price}</span><span className="md:hidden">${Math.floor(track.price)}</span>
+                                            <ShoppingBag size={14} /> <span className="hidden md:inline">₹{track.price}</span><span className="md:hidden">₹{Math.floor(track.price)}</span>
                                         </button>
                                     </div>
                                 </div>
@@ -161,6 +163,12 @@ export default function TracksPage({ initialTracks }: AllTracksProps) {
                     </div>
                 </div>
             </section>
+
+            <LicensingModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                track={selectedTrack}
+            />
         </div>
     );
 }

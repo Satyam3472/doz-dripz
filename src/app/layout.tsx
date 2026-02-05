@@ -1,10 +1,8 @@
 import type { Metadata } from 'next'
-import { Inter, Spline_Sans } from 'next/font/google'
+import { Inter, Spline_Sans, Manrope } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
-import { NavBar } from './components/NavBar'
-import Footer from './components/Footer'
-import Cart from './components/Cart'
+import ClientLayout from './components/ClientLayout'
 
 const inter = Inter({ subsets: ['latin'] })
 const splineSans = Spline_Sans({
@@ -12,28 +10,23 @@ const splineSans = Spline_Sans({
   variable: '--font-spline-sans',
   display: 'swap',
 })
+const manrope = Manrope({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Doz Dripz - Premium Beats',
-  description: 'High quality beats for artists',
-}
+  title: "DOZ DRIPZ | Audio Library",
+  description: "Premium Beats & Audio",
+};
 
 export default function RootLayout({
   children,
-}: {
-  children: React.ReactNode
-}) {
+}: Readonly<{
+  children: React.ReactNode;
+}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <head>
-        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=graphic_eq,dark_mode,light_mode,shopping_cart" />
-      </head>
-      <body className={`${inter.className} ${splineSans.variable}`}>
-        <Providers attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <NavBar />
-          <Cart />
-          {children}
-          <Footer />
+    <html lang="en">
+      <body className={manrope.className}>
+        <Providers>
+          <ClientLayout>{children}</ClientLayout>
         </Providers>
       </body>
     </html>

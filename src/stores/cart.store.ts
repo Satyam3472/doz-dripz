@@ -30,9 +30,24 @@ export const useCartStore = create<CartState>()(
             isOpen: false,
 
             addItem: (item) => {
-                const exists = get().items.find(i => i.trackId === item.trackId);
-                if (exists) return; // Prevent duplicates for now
-                set({ items: [...get().items, item], isOpen: true })
+                const items = get().items;
+                const existingIndex = items.findIndex(i => i.trackId === item.trackId);
+
+                if (existingIndex !== -1) {
+                    const existingItem = items[existingIndex];
+                    // If same track and same license, ignore (or could increase quantity if we supported it)
+                    if (existingItem.licenseId === item.licenseId) {
+                        return;
+                    }
+
+                    // If same track but different license, replace it
+                    const newItems = [...items];
+                    newItems[existingIndex] = item;
+                    set({ items: newItems, isOpen: true });
+                } else {
+                    // New track
+                    set({ items: [...items, item], isOpen: true });
+                }
             },
 
             removeItem: (trackId) =>

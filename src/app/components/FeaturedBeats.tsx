@@ -1,40 +1,59 @@
+'use client'
 import { ArrowRight, Play, ShoppingCart } from 'lucide-react'
+import { useState } from 'react'
+import LicensingModal from './LicensingModal'
 
 export default function FeaturedBeats() {
+    const [modalOpen, setModalOpen] = useState(false)
+    const [selectedTrack, setSelectedTrack] = useState<any>(null)
+
     const beats = [
         {
+            id: 101, // Adding mock IDs for functionality
             title: 'Midnight Pulse',
+            artist: 'Doz Dripz',
             bpm: '140 BPM',
             genre: 'Trap',
-            price: '$29.99',
-            image:
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuAvnIxeS9np_Y_ot-S4turuSlcjNd_QRmctJzwKxB3S7EuAZ2EG5rNZsjTEiwSLg5Tu0JsAPSr6l3dcw6u9k0gyg-OnTwfxl6q32eukSKjFKmlAP_0tOyh62QsiD9_IjWc5t9CqFJWYK5CXgyqI7i82sCwG3KHXsIOiSUsi0UUrEnyqTiofNyGQ31_27A02S7mEZns4BzOyUCD7sbs-HhpWySi2d4xb8STrDxkR1cr5rZlMMptIiiYvbyzONE46p10ik_LiwIGkAsw',
+            price: 29.99,
+            cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvnIxeS9np_Y_ot-S4turuSlcjNd_QRmctJzwKxB3S7EuAZ2EG5rNZsjTEiwSLg5Tu0JsAPSr6l3dcw6u9k0gyg-OnTwfxl6q32eukSKjFKmlAP_0tOyh62QsiD9_IjWc5t9CqFJWYK5CXgyqI7i82sCwG3KHXsIOiSUsi0UUrEnyqTiofNyGQ31_27A02S7mEZns4BzOyUCD7sbs-HhpWySi2d4xb8STrDxkR1cr5rZlMMptIiiYvbyzONE46p10ik_LiwIGkAsw',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuAvnIxeS9np_Y_ot-S4turuSlcjNd_QRmctJzwKxB3S7EuAZ2EG5rNZsjTEiwSLg5Tu0JsAPSr6l3dcw6u9k0gyg-OnTwfxl6q32eukSKjFKmlAP_0tOyh62QsiD9_IjWc5t9CqFJWYK5CXgyqI7i82sCwG3KHXsIOiSUsi0UUrEnyqTiofNyGQ31_27A02S7mEZns4BzOyUCD7sbs-HhpWySi2d4xb8STrDxkR1cr5rZlMMptIiiYvbyzONE46p10ik_LiwIGkAsw',
         },
         {
+            id: 102,
             title: 'Neon Dreams',
+            artist: 'Doz Dripz',
             bpm: '128 BPM',
             genre: 'Pop',
-            price: '$29.99',
-            image:
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuDDtEvXCJ_x1gw44f1TDj2p1fn9OCXQuq08oacQkT1RtDeOytzuGXoN9SXKXI1irpuM7ROqX06gxKVH4L93Z-5w4dYlImnRveVSvhXbrpy4zYMciw0g96IOp66EZyN3CfY_agBZNRBK93l1YJlBpoarSVAP7AyCCsyz1CEmcrE4RjeTZt88grpe0ncHQCes2kz282uSKwlh7bl4MHwUX-L-X53ciVxilMY0v1fV8kWrvaUtyFVPOteJHQYsETQj6oziEDP0-n1xdsI',
+            price: 29.99,
+            cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDDtEvXCJ_x1gw44f1TDj2p1fn9OCXQuq08oacQkT1RtDeOytzuGXoN9SXKXI1irpuM7ROqX06gxKVH4L93Z-5w4dYlImnRveVSvhXbrpy4zYMciw0g96IOp66EZyN3CfY_agBZNRBK93l1YJlBpoarSVAP7AyCCsyz1CEmcrE4RjeTZt88grpe0ncHQCes2kz282uSKwlh7bl4MHwUX-L-X53ciVxilMY0v1fV8kWrvaUtyFVPOteJHQYsETQj6oziEDP0-n1xdsI',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuDDtEvXCJ_x1gw44f1TDj2p1fn9OCXQuq08oacQkT1RtDeOytzuGXoN9SXKXI1irpuM7ROqX06gxKVH4L93Z-5w4dYlImnRveVSvhXbrpy4zYMciw0g96IOp66EZyN3CfY_agBZNRBK93l1YJlBpoarSVAP7AyCCsyz1CEmcrE4RjeTZt88grpe0ncHQCes2kz282uSKwlh7bl4MHwUX-L-X53ciVxilMY0v1fV8kWrvaUtyFVPOteJHQYsETQj6oziEDP0-n1xdsI',
         },
         {
+            id: 103,
             title: 'Ethereal Flow',
+            artist: 'Doz Dripz',
             bpm: '95 BPM',
             genre: 'R&B',
-            price: '$29.99',
-            image:
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuA7iLlS73nJ3HUyQXy_hVDdH1GDAdBG_UlhSD8Pg4CASrneTSTTNP5uR1M-VoBK2NewhcM5nQ6TK842P2DbQfaIvqZnHNWdTAsq7kPCAxlkABlEYK5Efbkg8at5AaoEDGWisDgiJnMeqN23cm9DYDQEWzceR6bM3RW6Xw3Rc_UQwV3j54hucvo0a-31ETB7npGbDubYxpxrgXN8Z1yeU0BDy89DDQrzZMBYdyzFcKQSYcjTK5EmbSb-fgDgXAxdmTNId25XXod9nr4',
+            price: 29.99,
+            cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA7iLlS73nJ3HUyQXy_hVDdH1GDAdBG_UlhSD8Pg4CASrneTSTTNP5uR1M-VoBK2NewhcM5nQ6TK842P2DbQfaIvqZnHNWdTAsq7kPCAxlkABlEYK5Efbkg8at5AaoEDGWisDgiJnMeqN23cm9DYDQEWzceR6bM3RW6Xw3Rc_UQwV3j54hucvo0a-31ETB7npGbDubYxpxrgXN8Z1yeU0BDy89DDQrzZMBYdyzFcKQSYcjTK5EmbSb-fgDgXAxdmTNId25XXod9nr4',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuA7iLlS73nJ3HUyQXy_hVDdH1GDAdBG_UlhSD8Pg4CASrneTSTTNP5uR1M-VoBK2NewhcM5nQ6TK842P2DbQfaIvqZnHNWdTAsq7kPCAxlkABlEYK5Efbkg8at5AaoEDGWisDgiJnMeqN23cm9DYDQEWzceR6bM3RW6Xw3Rc_UQwV3j54hucvo0a-31ETB7npGbDubYxpxrgXN8Z1yeU0BDy89DDQrzZMBYdyzFcKQSYcjTK5EmbSb-fgDgXAxdmTNId25XXod9nr4',
         },
         {
+            id: 104,
             title: 'Dark Knight',
+            artist: 'Doz Dripz',
             bpm: '145 BPM',
             genre: 'Drill',
-            price: '$29.99',
-            image:
-                'https://lh3.googleusercontent.com/aida-public/AB6AXuCbQnMcCOCGqDJsS1qZi6JcfiX7k4VNfooiEHNowo-9xlZOVww80pdM19qYYODOeZgZkNqg8sdHc-bOfNGqkFshN-iAiK3Pmp64hrrs0QYA5a50lAwUKBpQ8km9eYeWm8DRNc6KG9HNS8tpYUV2WisyNZ62oveY0PVpqoR8vjhAHqiUMrrzfsK1gkr4xr5TqCbKU9YCT4qehIlTYjEe4lo8qChIwGgBvnP8nI7LSkHHiCL9uv0cR3GR2vUyHV-ZJ7VUISa_SXI0sl8',
+            price: 29.99,
+            cover: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbQnMcCOCGqDJsS1qZi6JcfiX7k4VNfooiEHNowo-9xlZOVww80pdM19qYYODOeZgZkNqg8sdHc-bOfNGqkFshN-iAiK3Pmp64hrrs0QYA5a50lAwUKBpQ8km9eYeWm8DRNc6KG9HNS8tpYUV2WisyNZ62oveY0PVpqoR8vjhAHqiUMrrzfsK1gkr4xr5TqCbKU9YCT4qehIlTYjEe4lo8qChIwGgBvnP8nI7LSkHHiCL9uv0cR3GR2vUyHV-ZJ7VUISa_SXI0sl8',
+            image: 'https://lh3.googleusercontent.com/aida-public/AB6AXuCbQnMcCOCGqDJsS1qZi6JcfiX7k4VNfooiEHNowo-9xlZOVww80pdM19qYYODOeZgZkNqg8sdHc-bOfNGqkFshN-iAiK3Pmp64hrrs0QYA5a50lAwUKBpQ8km9eYeWm8DRNc6KG9HNS8tpYUV2WisyNZ62oveY0PVpqoR8vjhAHqiUMrrzfsK1gkr4xr5TqCbKU9YCT4qehIlTYjEe4lo8qChIwGgBvnP8nI7LSkHHiCL9uv0cR3GR2vUyHV-ZJ7VUISa_SXI0sl8',
         },
     ]
+
+    const openModal = (beat: any) => {
+        setSelectedTrack(beat)
+        setModalOpen(true)
+    }
 
     return (
         <section className="mx-auto max-w-[1200px] px-6 py-16">
@@ -79,16 +98,19 @@ export default function FeaturedBeats() {
                                 <span>
                                     {beat.bpm} - {beat.genre}
                                 </span>
-                                <span className="font-bold text-doz-red">{beat.price}</span>
+                                <span className="font-bold text-doz-red">₹{beat.price}</span>
                             </div>
                         </div>
-                        <button className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 py-2.5 text-sm font-bold text-slate-900 transition-colors hover:border-doz-red hover:bg-doz-red hover:text-white dark:border-white/10 dark:text-white">
+                        <button
+                            onClick={() => openModal(beat)}
+                            className="flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 py-2.5 text-sm font-bold text-slate-900 transition-colors hover:border-doz-red hover:bg-doz-red hover:text-white dark:border-white/10 dark:text-white">
                             <ShoppingCart className="h-4 w-4" />{' '}
                             Add to Cart
                         </button>
                     </div>
                 ))}
             </div>
+            <LicensingModal isOpen={modalOpen} onClose={() => setModalOpen(false)} track={selectedTrack} />
         </section>
     )
 }

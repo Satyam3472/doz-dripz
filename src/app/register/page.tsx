@@ -25,6 +25,7 @@ export default function RegisterPage() {
         const password = formData.get('password') as string
         const firstName = formData.get('firstName') as string
         const lastName = formData.get('lastName') as string
+        const phone = formData.get('phone') as string
 
         let isValid = true
         const newErrors = { firstName: '', lastName: '', email: '', password: '', phone: '' }
@@ -36,6 +37,11 @@ export default function RegisterPage() {
 
         if (!lastName.trim()) {
             newErrors.lastName = 'Last name is required'
+            isValid = false
+        }
+
+        if (!phone.trim() || phone.length !== 10) {
+            newErrors.phone = 'Please enter valid 10 digit phone number'
             isValid = false
         }
 
@@ -173,9 +179,10 @@ export default function RegisterPage() {
                                         className="w-full bg-[#1a1a1a] border border-white/5 focus:border-white/20 rounded-xl py-3.5 pl-12 pr-4 text-white placeholder:text-zinc-700 focus:outline-none focus:ring-0 transition-all font-medium text-sm"
                                         id="phone"
                                         name="phone"
-                                        placeholder="+1 (555) 000-0000"
+                                        placeholder="9876543210"
                                         type="tel"
                                     />
+                                    {validationErrors.phone && <p className="text-xs text-red-500 font-medium ml-1">{validationErrors.phone}</p>}
                                 </div>
                             </div>
 

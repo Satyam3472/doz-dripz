@@ -113,7 +113,7 @@ export default function Hero() {
                             </div>
                         </div>
                         <button className="rounded-lg bg-doz-red px-6 py-2.5 text-xs font-black uppercase tracking-wider text-white shadow-lg shadow-doz-red/10 transition-all hover:bg-doz-red/90">
-                            BUY $49.99
+                            BUY ₹49.99
                         </button>
                     </div>
                 </div>

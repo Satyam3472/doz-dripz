@@ -19,6 +19,13 @@ export async function POST(req: Request) {
         );
     }
 
+    if (user.isVerified === 0) {
+        return NextResponse.json(
+            { error: "Email not verified", code: "EMAIL_NOT_VERIFIED" },
+            { status: 403 }
+        );
+    }
+
     const sessionId = randomUUID();
     // 30 days if remember is true, else 24 hours
     const maxAge = remember ? 30 * 24 * 60 * 60 : 24 * 60 * 60;

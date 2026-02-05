@@ -1,13 +1,16 @@
-"use client"
 import { useCartStore } from "@/stores/cart.store";
-import { X, ShoppingBasket, Trash2, ArrowRight } from "lucide-react";
+import { X, ShoppingBasket, Trash2, ArrowRight, Loader2 } from "lucide-react";
 import Image from "next/image";
-import { useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import Script from "next/script";
+
 
 export default function Cart() {
-    const { items, removeItem, total, isOpen, closeCart } = useCartStore();
+    const { items, removeItem, total, isOpen, closeCart, clearCart } = useCartStore();
     const pathname = usePathname();
+    const router = useRouter();
+    const [isProcessing, setIsProcessing] = useState(false);
 
     // Prevent body scroll when cart is open
     useEffect(() => {
@@ -21,10 +24,128 @@ export default function Cart() {
         };
     }, [isOpen]);
 
+    const handleCheckout = async () => {
+        setIsProcessing(true);
+        try {
+            // 1. Create Order
+            const res = await fetch("/api/payment/create-order", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ items }),
+            });
+
+            if (!res.ok) {
+                const error = await res.json();
+                if (res.status === 401) {
+                    // Redirect to login if unauthorized
+                    closeCart();
+                    router.push("/login?redirect=/checkout"); // ideally preserve cart
+                    return;
+                }
+                throw new Error(error.error || "Failed to create order");
+            }
+
+            const order = await res.json();
+
+            // 2. Open Razorpay
+            const options = {
+                key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+                amount: order.amount,
+                currency: order.currency,
+                name: "DOZ DRIPZ",
+                description: "Purchase Tracks",
+                image: "/assets/LOGO.png",
+                order_id: order.orderId,
+                handler: async function (response: any) {
+                    // 3. Verify Payment
+                    try {
+                        const verifyRes = await fetch("/api/payment/verify", {
+                            method: "POST",
+                            headers: { "Content-Type": "application/json" },
+                            body: JSON.stringify({
+                                razorpay_payment_id: response.razorpay_payment_id,
+                                razorpay_order_id: response.razorpay_order_id,
+                                razorpay_signature: response.razorpay_signature,
+                                items, // Pass items strictly for context, real validation happens on server
+                            }),
+                        });
+
+                        const verifyData = await verifyRes.json();
+
+                        if (verifyRes.ok && verifyData.success) {
+                            clearCart();
+                            closeCart();
+                            router.push("/payment-success");
+                        } else {
+                            alert("Payment success but verification failed. Please contact support.");
+                        }
+                    } catch (error) {
+                        console.error("Verification error:", error);
+                        alert("Payment verification error");
+                    }
+                },
+
+                prefill: {
+                    name: order.user?.name,
+                    email: order.user?.email,
+                    contact: order.user?.contact
+                },
+                config: {
+                    display: {
+                        blocks: {
+                            banks: {
+                                name: "Pay using",
+                                instruments: [
+                                    {
+                                        method: "upi"
+                                    },
+                                    {
+                                        method: "card"
+                                    },
+                                    {
+                                        method: "netbanking"
+                                    }
+                                ],
+                            },
+                        },
+                        sequence: ["block.banks"],
+                        preferences: {
+                            show_default_blocks: false,
+                        },
+                    },
+                },
+                theme: {
+                    color: "black", // doz-red
+                },
+                modal: {
+                    ondismiss: function () {
+                        setIsProcessing(false);
+                    }
+                }
+            };
+
+            const rzp1 = new (window as any).Razorpay(options);
+            rzp1.on('payment.failed', function (response: any) {
+                alert("Payment Failed: " + response.error.description);
+                setIsProcessing(false);
+            });
+            rzp1.open();
+
+        } catch (error: any) {
+            console.error("Checkout error:", error);
+            alert(error.message || "Something went wrong");
+            setIsProcessing(false);
+        }
+    };
+
     if (!isOpen || pathname === '/login' || pathname === '/register') return null;
 
     return (
         <div className="fixed inset-0 z-[60] flex justify-end">
+            <Script
+                id="razorpay-checkout-js"
+                src="https://checkout.razorpay.com/v1/checkout.js"
+            />
             <div
                 className="absolute inset-0 bg-black/60 backdrop-blur-[2px] transition-opacity"
                 onClick={closeCart}
@@ -81,7 +202,7 @@ export default function Cart() {
                                         <span className="text-[11px] text-white/50 bg-white/5 px-2 py-1 rounded">
                                             {item.licenseName}
                                         </span>
-                                        <span className="font-black text-sm text-white">${item.price}</span>
+                                        <span className="font-black text-sm text-white">₹{item.price}</span>
                                     </div>
                                 </div>
                             </div>
@@ -94,7 +215,7 @@ export default function Cart() {
                     <div className="p-6 border-t border-white/10 bg-black/40 space-y-4">
                         <div className="flex justify-between text-sm text-white">
                             <span className="text-white/50">Subtotal</span>
-                            <span className="font-bold">${total().toFixed(2)}</span>
+                            <span className="font-bold">₹{total().toFixed(2)}</span>
                         </div>
                         <div className="relative">
                             <input
@@ -108,14 +229,26 @@ export default function Cart() {
                         </div>
                         <div className="flex justify-between items-end pt-2">
                             <span className="text-sm font-bold uppercase tracking-widest text-white/50">Total</span>
-                            <span className="text-3xl font-black tracking-tight text-white">${total().toFixed(2)}</span>
+                            <span className="text-3xl font-black tracking-tight text-white">₹{total().toFixed(2)}</span>
                         </div>
-                        <button className="w-full bg-doz-red hover:bg-doz-red/90 text-white font-black py-4 rounded-xl shadow-[0_0_30px_rgba(127,19,236,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest">
-                            Checkout
-                            <ArrowRight size={20} />
+                        <button
+                            onClick={handleCheckout}
+                            disabled={isProcessing}
+                            className="w-full bg-doz-red hover:bg-doz-red/90 text-white font-black py-4 rounded-xl shadow-[0_0_30px_rgba(127,19,236,0.4)] transition-all hover:scale-[1.02] active:scale-95 flex items-center justify-center gap-2 uppercase tracking-widest disabled:opacity-50 disabled:cursor-not-allowed">
+                            {isProcessing ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={20} />
+                                    Processing...
+                                </>
+                            ) : (
+                                <>
+                                    Checkout
+                                    <ArrowRight size={20} />
+                                </>
+                            )}
                         </button>
                         <p className="text-[10px] text-center text-white/30 uppercase tracking-tighter">
-                            Secure checkout powered by Stripe
+                            Secure checkout powered by Razorpay
                         </p>
                     </div>
                 )}

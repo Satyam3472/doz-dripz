@@ -1,21 +1,57 @@
 "use client"
 import Link from 'next/link'
 import { ArrowLeft, Lock, Mail, Eye, EyeOff } from 'lucide-react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Logo from '../assets/LOGO.png'
 import { useAuthStore } from '@/stores/auth.store'
 
 
 export default function LoginPage() {
+    const searchParams = useSearchParams()
+
     const [showPassword, setShowPassword] = useState(false)
     const [loading, setLoading] = useState(false)
+    const [resending, setResending] = useState(false)
     const [error, setError] = useState('')
+    const [success, setSuccess] = useState('')
     const [validationErrors, setValidationErrors] = useState({ email: '', password: '' })
+    const [unverifiedEmail, setUnverifiedEmail] = useState('')
 
     const login = useAuthStore((state) => state.login)
     const router = useRouter()
+
+    useEffect(() => {
+        if (searchParams.get('verified') === 'true') {
+            setSuccess('Email verified successfully! You can now login.')
+        } else if (searchParams.get('passwordChanged') === 'true') {
+            setSuccess('Password updated successfully! Please login with your new password.')
+        }
+    }, [searchParams])
+
+    const handleResend = async () => {
+        if (!unverifiedEmail) return
+        setResending(true)
+        try {
+            const res = await fetch('/api/auth/resend-verification', {
+                method: 'POST',
+                body: JSON.stringify({ email: unverifiedEmail }),
+                headers: { 'Content-Type': 'application/json' }
+            })
+            const data = await res.json()
+            if (res.ok) {
+                setSuccess('Verification email sent! Please check your inbox.')
+                setError('')
+            } else {
+                setError(data.error || 'Failed to resend email')
+            }
+        } catch (err) {
+            setError('Something went wrong')
+        } finally {
+            setResending(false)
+        }
+    }
 
     const validate = (formData: FormData) => {
         const email = formData.get('email') as string
@@ -43,6 +79,8 @@ export default function LoginPage() {
     async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
         e.preventDefault()
         setError('')
+        setSuccess('')
+        setUnverifiedEmail('')
 
         const formData = new FormData(e.currentTarget)
 
@@ -51,7 +89,7 @@ export default function LoginPage() {
         }
 
         setLoading(true)
-        const email = formData.get('email')
+        const email = formData.get('email') as string
         const password = formData.get('password')
         const remember = formData.get('remember') === 'on'
 
@@ -65,6 +103,10 @@ export default function LoginPage() {
             const data = await res.json()
 
             if (!res.ok) {
+                if (data.code === 'EMAIL_NOT_VERIFIED') {
+                    setUnverifiedEmail(email)
+                    throw new Error('Please verify your email to continue.')
+                }
                 throw new Error(data.error || 'Something went wrong')
             }
 
@@ -125,9 +167,24 @@ export default function LoginPage() {
                             <p className="text-zinc-500 text-sm font-medium">Secure access to your dashboard</p>
                         </div>
 
+                        {success && (
+                            <div className="mb-6 rounded-lg bg-green-500/10 border border-green-500/20 p-3 text-center text-sm text-green-400 font-bold">
+                                {success}
+                            </div>
+                        )}
+
                         {error && (
-                            <div className="mb-6 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center text-sm text-red-400 font-bold">
-                                {error}
+                            <div className="mb-6 rounded-lg bg-red-500/10 border border-red-500/20 p-3 text-center text-sm text-red-400 font-bold flex flex-col gap-2">
+                                <span>{error}</span>
+                                {unverifiedEmail && (
+                                    <button
+                                        onClick={handleResend}
+                                        disabled={resending}
+                                        className="text-xs underline hover:text-red-300 disabled:opacity-50"
+                                    >
+                                        {resending ? 'Sending...' : 'Resend Verification Email'}
+                                    </button>
+                                )}
                             </div>
                         )}
 
@@ -204,7 +261,7 @@ export default function LoginPage() {
                                     </div>
                                     <span className="text-xs font-semibold text-zinc-500 group-hover:text-zinc-400 transition-colors">Remember me</span>
                                 </label>
-                                <Link href="#" className="text-[11px] font-bold text-doz-red hover:text-red-400 transition-colors uppercase tracking-wider">
+                                <Link href="/forgot-password" className="text-[11px] font-bold text-doz-red hover:text-red-400 transition-colors uppercase tracking-wider">
                                     Forgot Password?
                                 </Link>
                             </div>

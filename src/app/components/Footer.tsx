@@ -7,7 +7,7 @@ export default function Footer() {
     if (pathname === '/login' || pathname === '/register') return null;
 
     return (
-        <footer className="border-t border-white/5 bg-white py-10 mt-4 dark:bg-background-dark">
+        <footer className="border-t border-white/5 bg-white py-10 dark:bg-background-dark">
             <div className="mx-auto max-w-[1200px] px-6">
                 <div className="grid grid-cols-2 gap-8 md:grid-cols-3 lg:grid-cols-4">
                     <div className="col-span-2 flex flex-col gap-4 md:col-span-1 lg:col-span-2">

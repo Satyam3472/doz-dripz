@@ -2,6 +2,7 @@
 import { Play, Pause, SkipForward, SkipBack, Volume2, ShoppingBag } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
+import LicensingModal from "./LicensingModal";
 import { usePlayerStore } from "@/stores/player.store";
 import { useCartStore } from "@/stores/cart.store";
 
@@ -18,6 +19,24 @@ export default function MediaPlayer() {
     const audioRef = useRef<HTMLAudioElement>(null);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [modalOpen, setModalOpen] = useState(false);
+
+    const openModal = () => {
+        if (currentTrack) {
+            setModalOpen(true);
+        }
+    };
+
+    const [barStyles, setBarStyles] = useState<{ height: string; animationDelay: string }[]>([]);
+
+    useEffect(() => {
+        setBarStyles(
+            Array.from({ length: 60 }, () => ({
+                height: `${Math.random() * 60 + 20}%`,
+                animationDelay: `${Math.random() * 0.5}s`,
+            }))
+        );
+    }, []);
 
     // Sync Audio Element with Store State
     useEffect(() => {
@@ -75,14 +94,11 @@ export default function MediaPlayer() {
     if (!currentTrack) {
         return (
             <div className={`mb-0 flex h-8 w-full max-w-2xl items-end justify-center gap-1.5 px-4 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-50'}`}>
-                {[...Array(60)].map((_, i) => (
+                {barStyles.map((style, i) => (
                     <div
                         key={i}
                         className={`w-1.5 rounded-full bg-doz-red transition-all duration-300 ${isPlaying ? 'animate-wave' : ''}`}
-                        style={{
-                            height: `${Math.random() * 60 + 20}%`,
-                            animationDelay: `${Math.random() * 0.5}s`
-                        }}
+                        style={style}
                     />
                 ))}
             </div>
@@ -101,14 +117,11 @@ export default function MediaPlayer() {
 
             {/* Waveform Animation (Only acts if playing) */}
             <div className={`mb-0 flex h-8 w-full max-w-2xl items-end justify-center gap-1.5 px-4 transition-opacity duration-300 ${isPlaying ? 'opacity-100' : 'opacity-50'}`}>
-                {[...Array(60)].map((_, i) => (
+                {barStyles.map((style, i) => (
                     <div
                         key={i}
                         className={`w-1.5 rounded-full bg-doz-red transition-all duration-300 ${isPlaying ? 'animate-wave' : ''}`}
-                        style={{
-                            height: `${Math.random() * 60 + 20}%`,
-                            animationDelay: `${Math.random() * 0.5}s`
-                        }}
+                        style={style}
                     />
                 ))}
             </div>
@@ -154,15 +167,7 @@ export default function MediaPlayer() {
                         </button>
 
                         <button
-                            onClick={() => addItem({
-                                trackId: currentTrack.id,
-                                licenseId: 1,
-                                price: currentTrack.price,
-                                title: currentTrack.title,
-                                artist: currentTrack.artist,
-                                cover: currentTrack.cover,
-                                licenseName: "MP3 Lease"
-                            })}
+                            onClick={openModal}
                             className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-black transition-all hover:bg-gray-200 active:scale-95"
                         >
                             <ShoppingBag className="h-4 w-4" />
@@ -246,21 +251,19 @@ export default function MediaPlayer() {
                         </div>
                     </div>
                     <button
-                        onClick={() => addItem({
-                            trackId: currentTrack.id,
-                            licenseId: 1,
-                            price: currentTrack.price,
-                            title: currentTrack.title,
-                            artist: currentTrack.artist,
-                            cover: currentTrack.cover,
-                            licenseName: "MP3 Lease"
-                        })}
+                        onClick={openModal}
                         className="flex items-center gap-2 rounded-lg bg-white px-6 py-2.5 text-xs font-black uppercase tracking-wider text-black transition-all hover:scale-105 hover:bg-gray-200 active:scale-95 shadow-lg"
                     >
-                        <ShoppingBag className="h-3 w-3" /> <span className="hidden lg:inline">${currentTrack.price}</span>
+                        <ShoppingBag className="h-3 w-3" /> <span className="hidden lg:inline">₹{currentTrack.price}</span>
                     </button>
                 </div>
             </div>
+
+            <LicensingModal
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                track={currentTrack}
+            />
         </div>
     );
 }

@@ -7,58 +7,80 @@ async function seed() {
     console.log('Seeding database...');
 
     // Check if tracks exist
-    const existing = getAllTracks();
-    if (existing.length > 0) {
-        console.log('Tracks already exist, skipping seed.');
-        return;
+    const existingTracks = getAllTracks();
+    if (existingTracks.length === 0) {
+        console.log('Seeding tracks...');
+        // Insert tracks
+        for (const track of TRACKS) {
+            const stmt = db.prepare(`
+                INSERT INTO tracks (title, artist, bpm, duration, tags, thumbnail_url, audio_url, price, featured)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            `);
+
+            // simple helper to parse duration
+            const parseDuration = (dur: string) => {
+                const [m, s] = dur.split(':').map(Number);
+                return m * 60 + s;
+            };
+
+            stmt.run(
+                track.title,
+                track.artist,
+                track.bpm,
+                parseDuration(track.duration),
+                JSON.stringify(track.tags),
+                track.cover,
+                track.audioUrl,
+                track.price,
+                0 // featured
+            );
+            console.log(`Inserted track: ${track.title}`);
+        }
+    } else {
+        console.log('Tracks already exist, skipping track seed.');
     }
 
-    // Insert tracks
-    for (const track of TRACKS) {
-        // Map data.ts structure to DB structure if consistent, or adjust
-        // data.ts has: id, title, artist, bpm, duration, tags, cover, audioUrl, price
-        // repo createTrack expects: title, artist, tags (array), price, audio_url, featured
-        // We need to map 'cover' to 'thumbnail_url' and 'audioUrl' to 'audio_url'
+    // Seed Licenses
+    const existingLicenses = db.prepare('SELECT count(*) as count FROM licenses').get() as { count: number };
+    if (existingLicenses.count === 0) {
+        console.log('Seeding licenses...');
+        const licenses = [
+            {
+                id: 1,
+                name: "Standard Lease",
+                price: 29.99,
+                type: "Non-Exclusive",
+                features: ["MP3 & WAV", "Used for Music Recording", "Distribute up to 2,000 copies", "500,000 Online Audio Streams", "1 Music Video"],
+                bulk_deals: []
+            },
+            {
+                id: 2,
+                name: "Premium Lease",
+                price: 99.99,
+                type: "Non-Exclusive",
+                features: ["STEMS, MP3 & WAV", "Unlimited Recording", "Unlimited Distribution", "Unlimited Streams", "Radio Broadcasting"],
+                bulk_deals: []
+            }
+        ];
 
-        // Note: The repo doesn't seem to accept 'duration' (int) or 'thumbnail_url' in createTrack based on my previous view. This is a discrepancy.
-        // Let's check repo again or update it. 
-        // For now, I'll pass what I can.
-
-        // Wait, looking at track.repo.ts viewed earlier:
-        // INSERT INTO tracks (title, artist, tags, price, audio_url, featured)
-        // It misses duration, bpm, thumbnail_url!
-
-        // I should probably update the repo first to include all fields.
-        // But for step 1, I will just follow the repo signature and maybe update repo later if needed.
-        // Actually, if I don't save cover image, UI won't show it from DB.
-
-        // Let's assume for this step I will update the repo as well implicitly or just use raw db.prepare here for full control?
-        // Better to use a direct insert here to ensure all fields are matched.
-
-        const stmt = db.prepare(`
-            INSERT INTO tracks (title, artist, bpm, duration, tags, thumbnail_url, audio_url, price, featured)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        const insertLicense = db.prepare(`
+            INSERT INTO licenses (id, name, price, type, features, bulk_deals)
+            VALUES (?, ?, ?, ?, ?, ?)
         `);
 
-        // duration in DB is INTEGER (seconds presumably?), data.ts has string "03:31".
-        // simple helper to parse duration
-        const parseDuration = (dur: string) => {
-            const [m, s] = dur.split(':').map(Number);
-            return m * 60 + s;
-        };
-
-        stmt.run(
-            track.title,
-            track.artist,
-            track.bpm,
-            parseDuration(track.duration),
-            JSON.stringify(track.tags),
-            track.cover,
-            track.audioUrl,
-            track.price,
-            0 // featured
-        );
-        console.log(`Inserted: ${track.title}`);
+        for (const lic of licenses) {
+            insertLicense.run(
+                lic.id,
+                lic.name,
+                lic.price,
+                lic.type,
+                JSON.stringify(lic.features),
+                JSON.stringify(lic.bulk_deals)
+            );
+            console.log(`Inserted license: ${lic.name}`);
+        }
+    } else {
+        console.log('Licenses already exist, skipping license seed.');
     }
 
     console.log('Seeding complete.');

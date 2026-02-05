@@ -67,7 +67,7 @@ export default function LicensingPlans() {
                             Standard (MP3 + WAV)
                         </h3>
                         <div className="mt-4 text-4xl font-black tracking-tight text-white">
-                            $29.99
+                            ₹29.99
                         </div>
 
                         <div className="mt-6 space-y-2 text-xs font-medium text-white/60">
@@ -98,7 +98,7 @@ export default function LicensingPlans() {
                             Unlimited (Best)
                         </h3>
                         <div className="mt-4 text-5xl font-black tracking-tight text-black">
-                            $99.99
+                            ₹99.99
                         </div>
 
                         <div className="mt-6 space-y-2 text-xs font-bold text-black/70">
