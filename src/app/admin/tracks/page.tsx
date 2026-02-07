@@ -42,7 +42,8 @@ export default function AdminTracksPage() {
 
             {/* Tracks List */}
             <div className="bg-[#121212] border border-[#262626] rounded-2xl overflow-hidden">
-                <table className="w-full text-left">
+                {/* Desktop Table */}
+                <table className="w-full text-left hidden md:table">
                     <thead className="bg-white/5 text-[10px] font-black uppercase tracking-widest text-[#A3A3A3]">
                         <tr>
                             <th className="px-6 py-4">Track</th>
@@ -90,6 +91,41 @@ export default function AdminTracksPage() {
                         ))}
                     </tbody>
                 </table>
+
+                {/* Mobile Grid */}
+                <div className="grid grid-cols-1 gap-4 p-4 md:hidden">
+                    {tracks.map(track => (
+                        <div key={track.id} className="bg-white/5 p-4 rounded-xl border border-white/5 flex flex-col gap-4">
+                            <div className="flex items-start justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="h-14 w-14 rounded-lg bg-zinc-800 relative overflow-hidden flex-shrink-0 border border-white/5">
+                                        {track.thumbnail_url && <Image src={track.thumbnail_url} alt={track.title} fill className="object-cover" />}
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-white text-base">{track.title}</h3>
+                                        <p className="text-xs text-[#A3A3A3] font-bold tracking-wide">{track.artist}</p>
+                                    </div>
+                                </div>
+                                <button className="text-[#A3A3A3] hover:text-white p-2">
+                                    <MoreVertical size={20} />
+                                </button>
+                            </div>
+
+                            <div className="flex items-center gap-2">
+                                <span className={`px-2 py-1 rounded text-[10px] font-bold uppercase tracking-wider ${track.status === 'ACTIVE' ? 'bg-green-500/10 text-green-500' : 'bg-red-500/10 text-red-500'}`}>
+                                    {track.status || 'ACTIVE'}
+                                </span>
+                                <span className="bg-white/5 px-2 py-1 rounded border border-white/5 text-[10px] font-bold text-[#A3A3A3]">{track.bpm || '-'} BPM</span>
+                                <span className="bg-white/5 px-2 py-1 rounded border border-white/5 text-[10px] font-bold text-[#A3A3A3]">{track.key || '-'} Key</span>
+                            </div>
+
+                            <div className="text-[10px] text-[#A3A3A3] font-medium uppercase tracking-widest pt-2 border-t border-white/5">
+                                Uploaded on {new Date(track.created_at).toLocaleDateString()}
+                            </div>
+                        </div>
+                    ))}
+                </div>
+
                 {tracks.length === 0 && !loading && (
                     <div className="p-12 text-center text-[#A3A3A3]">
                         <p>No tracks found. Upload your first beat!</p>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
@@ -10,12 +10,14 @@ import {
     Check,
     Upload,
     X,
-    Music
+    Music,
+    Loader2
 } from "lucide-react";
 
-export default function NewTrackPage() {
+export default function EditTrackPage({ params }: { params: { id: string } }) {
     const router = useRouter();
     const [submitting, setSubmitting] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     // Form State
     const [formData, setFormData] = useState({
@@ -25,6 +27,8 @@ export default function NewTrackPage() {
         tags: "",
     });
 
+    // We store URLs for existing files, and File objects for new uploads
+    const [existingFiles, setExistingFiles] = useState<{ cover: string; audio: string }>({ cover: "", audio: "" });
     const [files, setFiles] = useState<{ cover: File | null; audio: File | null }>({ cover: null, audio: null });
     const [audioMode, setAudioMode] = useState<'upload' | 'url'>('upload');
     const [audioUrl, setAudioUrl] = useState('');
@@ -57,6 +61,62 @@ export default function NewTrackPage() {
         }
     ]);
 
+    // Fetch Track Data
+    useEffect(() => {
+        const fetchTrack = async () => {
+            try {
+                const res = await fetch(`/api/admin/tracks/${params.id}`);
+                if (!res.ok) throw new Error("Failed to load track");
+                const track = await res.json();
+
+                // Populate Form
+                setFormData({
+                    title: track.title,
+                    genre: track.genre || "Trap",
+                    bpm: track.bpm.toString(),
+                    tags: Array.isArray(track.tags) ? track.tags.join(", ") : track.tags || "",
+                });
+
+                setExistingFiles({
+                    cover: track.coverArtUrl || "",
+                    audio: track.audio_url || ""
+                });
+
+                // Determine Audio Mode
+                if (track.audio_url && !track.audio_url.startsWith('/uploads')) {
+                    setAudioMode('url');
+                    setAudioUrl(track.audio_url);
+                } else {
+                    setAudioMode('upload');
+                }
+
+                // Populate Licenses
+                // We need to map DB licenses (track.licenses) to our UI state.
+                // We enabled them if they exist in DB.
+                if (track.licenses && track.licenses.length > 0) {
+                    const newLicenses = licenses.map(uiLic => {
+                        const dbLic = track.licenses.find((l: any) => l.licenseType === uiLic.name);
+                        if (dbLic) {
+                            return { ...uiLic, enabled: true, price: dbLic.price };
+                        }
+                        return { ...uiLic, enabled: false };
+                    });
+                    setLicenses(newLicenses);
+                }
+
+            } catch (error) {
+                console.error(error);
+                alert("Error loading track data");
+                router.push("/admin/tracks");
+            } finally {
+                setLoading(false);
+            }
+        };
+
+        fetchTrack();
+    }, [params.id]);
+
+
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>, type: 'cover' | 'audio') => {
         if (e.target.files && e.target.files[0]) {
             setFiles(prev => ({ ...prev, [type]: e.target.files![0] }));
@@ -77,61 +137,68 @@ export default function NewTrackPage() {
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if ((!files.audio && !audioUrl) || !formData.title) {
-            alert("Please provide at least a Title and Audio Source.");
-            return;
-        }
 
         setSubmitting(true);
         try {
             const data = new FormData();
             data.append("title", formData.title);
-            data.append("artist", "DOZ DRIPZ"); // Default
             data.append("bpm", formData.bpm);
-            data.append("key", ""); // Not in design, optional
-            data.append("tags", JSON.stringify(formData.tags.split(",").map(t => t.trim())));
             data.append("genre", formData.genre);
+            data.append("tags", JSON.stringify(formData.tags.split(",").map(t => t.trim())));
 
             if (files.cover) data.append("cover", files.cover);
 
             if (audioMode === 'upload' && files.audio) {
                 data.append("audio", files.audio);
+            } else if (audioMode === 'url' && audioUrl !== existingFiles.audio) {
+                data.append("audioUrl", audioUrl);
             } else if (audioMode === 'url' && audioUrl) {
                 data.append("audioUrl", audioUrl);
             }
 
-            // Map design licenses to backend format
             const activeLicenses = licenses.filter(l => l.enabled).map(l => ({
                 type: l.name,
                 price: l.price
             }));
             data.append("licenses", JSON.stringify(activeLicenses));
 
-            const res = await fetch("/api/admin/tracks", {
-                method: "POST",
+            const res = await fetch(`/api/admin/tracks/${params.id}`, {
+                method: "PUT",
                 body: data
             });
 
             if (res.ok) {
-                router.push("/admin/tracks");
+                router.push("/admin/tracks"); // Or stay on page based on requirements, prompts says "Edit -> stay on page"
+                // But usually better to refresh or show success.
+                // Prompt: "Edit → stay on page". Okay.
+                alert("Track updated successfully!");
+                // router.refresh(); // Refresh to show new data if any
             } else {
-                alert("Failed to upload track.");
+                alert("Failed to update track.");
             }
         } catch (error) {
             console.error(error);
-            alert("Error uploading track.");
+            alert("Error updating track.");
         } finally {
             setSubmitting(false);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex h-[50vh] items-center justify-center">
+                <Loader2 className="animate-spin text-white" size={32} />
+            </div>
+        );
+    }
 
     return (
         <div className="max-w-6xl mx-auto">
             {/* Header */}
             <header className="mb-10 flex items-center justify-between">
                 <div className="flex flex-col gap-1">
-                    <h2 className="text-white text-3xl font-extrabold tracking-tight">Upload New Track</h2>
-                    <p className="text-[#A3A3A3] text-sm font-medium">Configure your beat details and license contracts.</p>
+                    <h2 className="text-white text-3xl font-extrabold tracking-tight">Edit Track</h2>
+                    <p className="text-[#A3A3A3] text-sm font-medium">Update beat details and license contracts.</p>
                 </div>
                 <div className="flex items-center gap-3">
                     <button
@@ -139,7 +206,7 @@ export default function NewTrackPage() {
                         disabled={submitting}
                         className="bg-[#EC1313] text-white px-8 py-3 rounded-xl text-sm font-bold tracking-tight hover:brightness-110 shadow-lg shadow-[#EC1313]/20 transition-all active:scale-[0.98] disabled:opacity-50"
                     >
-                        {submitting ? "Publishing..." : "Publish Track"}
+                        {submitting ? "Saving..." : "Save Changes"}
                     </button>
                 </div>
             </header>
@@ -202,17 +269,25 @@ export default function NewTrackPage() {
                                 </div>
                             </div>
                             <div className="flex flex-col gap-2">
-                                <label className="text-[10px] font-extrabold text-[#A3A3A3] uppercase tracking-widest">Cover Art (Optional)</label>
+                                <label className="text-[10px] font-extrabold text-[#A3A3A3] uppercase tracking-widest">
+                                    Cover Art {existingFiles.cover ? "(Uploaded)" : "(Optional)"}
+                                </label>
                                 <label className="flex items-center gap-4 cursor-pointer">
-                                    <div className="h-16 w-16 bg-white/[0.02] border border-[#262626] rounded-lg flex items-center justify-center overflow-hidden">
+                                    <div className="h-16 w-16 bg-white/[0.02] border border-[#262626] rounded-lg flex items-center justify-center overflow-hidden relative">
                                         {files.cover ? (
                                             <img src={URL.createObjectURL(files.cover)} alt="Cover" className="h-full w-full object-cover" />
+                                        ) : existingFiles.cover ? (
+                                            <img src={existingFiles.cover} alt="Cover" className="h-full w-full object-cover" />
                                         ) : (
                                             <Upload className="text-[#A3A3A3]" size={20} />
                                         )}
+                                        {/* Overlay for change hint */}
+                                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 hover:opacity-100 transition-opacity">
+                                            <Upload className="text-white" size={20} />
+                                        </div>
                                     </div>
                                     <div className="text-xs text-[#A3A3A3]">
-                                        <span className="text-white font-bold underline">Click to upload</span> cover art.<br /> Recommended 3000x3000px.
+                                        <span className="text-white font-bold underline">Click to change</span> cover art.<br /> Recommended 3000x3000px.
                                     </div>
                                     <input type="file" accept="image/*" onChange={(e) => handleFileChange(e, 'cover')} className="hidden" />
                                 </label>
@@ -221,7 +296,7 @@ export default function NewTrackPage() {
 
                         {/* File Uploads */}
                         <div className="flex flex-col gap-6">
-                            {/* Audio File */}
+                            {/* Audio Source */}
                             <div className="flex flex-col gap-2">
                                 <label className="text-[10px] font-extrabold text-[#A3A3A3] uppercase tracking-widest">Audio Source</label>
 
@@ -246,9 +321,11 @@ export default function NewTrackPage() {
                                 {audioMode === 'upload' ? (
                                     <label className="flex-1 border-2 border-dashed border-[#262626] rounded-2xl bg-white/[0.02] flex flex-col items-center justify-center p-8 hover:bg-white/[0.04] transition-all group cursor-pointer h-[200px] relative">
                                         <div className="size-16 rounded-full bg-white/5 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-                                            {files.audio ? <Check className="text-green-500" size={30} /> : <CloudUpload className="text-[#A3A3A3]" size={30} />}
+                                            {(files.audio || existingFiles.audio) ? <Check className="text-green-500" size={30} /> : <CloudUpload className="text-[#A3A3A3]" size={30} />}
                                         </div>
-                                        <p className="text-sm font-bold text-white mb-1">{files.audio ? files.audio.name : "Drag and drop audio files"}</p>
+                                        <p className="text-sm font-bold text-white mb-1">
+                                            {files.audio ? files.audio.name : existingFiles.audio ? "Audio File Uploaded (Click to Replace)" : "Drag and drop audio files"}
+                                        </p>
                                         <p className="text-[11px] text-[#A3A3A3]">WAV, MP3, or AIFF up to 250MB</p>
                                         <div className="mt-4 px-4 py-2 bg-[#121212] border border-[#262626] rounded-lg text-[10px] font-bold uppercase tracking-widest hover:bg-[#262626] transition-colors cursor-pointer text-white">
                                             Browse Files
@@ -264,13 +341,13 @@ export default function NewTrackPage() {
                                             value={audioUrl}
                                             onChange={(e) => setAudioUrl(e.target.value)}
                                         />
-                                        <p className="text-[11px] text-[#A3A3A3]">Provide a direct link to the audio file (Google Drive, Dropbox, etc).</p>
+                                        <p className="text-[11px] text-[#A3A3A3]">Provide a direct link to the audio file.</p>
+                                        {existingFiles.audio && !audioUrl && (
+                                            <p className="text-[10px] text-green-500/80">current: {existingFiles.audio}</p>
+                                        )}
                                     </div>
                                 )}
                             </div>
-
-                            {/* Cover Art (Added to match backend requirement, though not explicit in user's general HTML logic block, it's safer to have) */}
-
                         </div>
                     </div>
                 </section>

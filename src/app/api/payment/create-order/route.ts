@@ -31,7 +31,7 @@ export async function POST(req: Request) {
         const user = db.prepare("SELECT first_name, last_name, email, phone FROM users WHERE id = ?").get(session.user_id) as any;
 
         // 2. Parse Body & Calculate Price
-        const { items } = await req.json();
+        const { items, couponCode } = await req.json();
 
         if (!items || !Array.isArray(items) || items.length === 0) {
             return NextResponse.json({ error: "Cart is empty" }, { status: 400 });
@@ -57,8 +57,25 @@ export async function POST(req: Request) {
             }
         }
 
+        // Apply Coupon if provided
+        let discountAmount = 0;
+        if (couponCode) {
+            const coupon = db.prepare('SELECT * FROM coupons WHERE code = ?').get(couponCode.toUpperCase()) as any;
+            if (coupon && coupon.isActive && new Date(coupon.expiresAt) > new Date()) {
+                discountAmount = Math.floor(totalAmount * (coupon.discountPercent / 100));
+            }
+            // If invalid coupon, we just ignore it for now or could error out?
+            // User requirement says "Revalidate coupon server-side", implied silent fail or error?
+            // Usually error is safer so frontend knows sync issue.
+            else {
+                return NextResponse.json({ error: "Invalid or expired coupon" }, { status: 400 });
+            }
+        }
+
+        const finalAmount = Math.max(0, totalAmount - discountAmount);
+
         // Razorpay expects amount in paise
-        const amountInPaise = Math.round(totalAmount * 100);
+        const amountInPaise = Math.round(finalAmount * 100);
 
         const options = {
             amount: amountInPaise,

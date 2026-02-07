@@ -4,7 +4,8 @@ import * as React from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
-import { Menu, X, ShoppingCart, User, LogOut, LayoutDashboard, ChevronDown } from 'lucide-react'
+import { useTheme } from 'next-themes'
+import { Menu, X, ShoppingCart, User, LogOut, LayoutDashboard, ChevronDown, Sun, Moon } from 'lucide-react'
 import Logo from '../assets/LOGO.png'
 import { useCartStore } from '@/stores/cart.store'
 import { useAuthStore } from '@/stores/auth.store'
@@ -13,7 +14,7 @@ const NAV_LINKS = [
     { name: 'Beats', href: '/tracks' },
     { name: 'Licensing', href: '/licensing' },
     { name: 'Explore', href: '/home' },
-    { name: 'About Me', href: '/portfolio' },
+    { name: 'About Me', href: '/profile' },
     { name: 'Contact', href: '/contact' },
 ]
 
@@ -25,6 +26,7 @@ export function NavBar() {
     // Connect to Stores
     const { toggleCart, items } = useCartStore()
     const { user, logout } = useAuthStore()
+    const { theme, setTheme, resolvedTheme } = useTheme()
     const cartCount = items.length
 
     const router = useRouter()
@@ -59,8 +61,12 @@ export function NavBar() {
         setIsProfileOpen(false)
     }
 
+    const toggleTheme = () => {
+        setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')
+    }
+
     return (
-        <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-white/80 backdrop-blur-md dark:bg-background-dark/80">
+        <nav className="sticky top-0 z-50 w-full border-b border-white/5 bg-white/80 backdrop-blur-md dark:bg-background-dark/80 transition-colors duration-300">
             <div className="mx-auto flex max-w-[1200px] items-center justify-between px-4 py-3 sm:px-6 relative">
                 {/* Logo + Menu Toggle */}
                 <div className="flex items-center gap-3">
@@ -116,6 +122,17 @@ export function NavBar() {
 
                 {/* Desktop Actions */}
                 <div className="hidden md:flex items-center gap-6">
+                    {/* Theme Toggle */}
+                    {mounted && (
+                        <button
+                            onClick={toggleTheme}
+                            className="rounded-full p-2 text-slate-700 hover:bg-slate-100 dark:text-slate-200 dark:hover:bg-white/10 transition-all"
+                            aria-label="Toggle Theme"
+                        >
+                            {resolvedTheme === 'dark' ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                        </button>
+                    )}
+
                     <button
                         onClick={toggleCart}
                         className="relative p-2 text-slate-700 hover:text-doz-red dark:text-white transition-colors"
@@ -148,6 +165,15 @@ export function NavBar() {
                                             <p className="text-xs text-slate-500 dark:text-slate-400">Signed in as</p>
                                             <p className="truncate text-sm font-bold text-slate-900 dark:text-white">{user.email}</p>
                                         </div>
+                                        {(user.role === 'ADMIN' || user.role === 'MUSICIAN') && (
+                                            <Link
+                                                href="/admin"
+                                                className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/5"
+                                            >
+                                                <LayoutDashboard className="h-4 w-4" />
+                                                Admin Panel
+                                            </Link>
+                                        )}
                                         <Link
                                             href="/dashboard"
                                             className="flex w-full items-center gap-2 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-white/5"
@@ -197,6 +223,29 @@ export function NavBar() {
 
                     <div className="my-4 h-px w-full bg-slate-100 dark:bg-white/10" />
 
+                    {/* Mobile Theme Toggle */}
+                    <div className="px-4 mb-4">
+                        <div className="flex items-center justify-between rounded-lg bg-slate-50 p-3 dark:bg-white/5">
+                            <span className="text-sm font-medium text-slate-700 dark:text-slate-200">Theme</span>
+                            {mounted && (
+                                <button
+                                    onClick={toggleTheme}
+                                    className="flex items-center gap-2 text-sm font-bold text-doz-red"
+                                >
+                                    {resolvedTheme === 'dark' ? (
+                                        <>
+                                            <Sun className="h-4 w-4" /> Light Mode
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Moon className="h-4 w-4" /> Dark Mode
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
                     {/* Mobile Auth Actions */}
                     <div className="px-2">
                         {mounted && (
@@ -211,6 +260,16 @@ export function NavBar() {
                                             <span className="text-xs text-slate-500 dark:text-slate-400">{user.email}</span>
                                         </div>
                                     </div>
+
+                                    {(user.role === 'ADMIN' || user.role === 'MUSICIAN') && (
+                                        <Link
+                                            href="/admin"
+                                            className="flex w-full items-center gap-3 rounded-lg bg-slate-50 px-4 py-3 text-sm font-bold text-slate-800 dark:bg-white/5 dark:text-white"
+                                        >
+                                            <LayoutDashboard className="h-4 w-4" />
+                                            Admin Panel
+                                        </Link>
+                                    )}
 
                                     <Link
                                         href="/dashboard"

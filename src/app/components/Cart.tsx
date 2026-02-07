@@ -1,5 +1,5 @@
 import { useCartStore } from "@/stores/cart.store";
-import { X, ShoppingBasket, Trash2, ArrowRight, Loader2 } from "lucide-react";
+import { X, ShoppingBasket, Trash2, ArrowRight, Loader2, Tag, CheckCircle } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
@@ -7,15 +7,20 @@ import Script from "next/script";
 
 
 export default function Cart() {
-    const { items, removeItem, total, isOpen, closeCart, clearCart } = useCartStore();
+    const { items, removeItem, total, subtotal, isOpen, closeCart, clearCart, coupon, applyCoupon, removeCoupon } = useCartStore();
     const pathname = usePathname();
     const router = useRouter();
     const [isProcessing, setIsProcessing] = useState(false);
+    const [couponInput, setCouponInput] = useState("");
+    const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
+    const [couponError, setCouponError] = useState("");
 
     // Prevent body scroll when cart is open
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            setCouponInput("");
+            setCouponError("");
         } else {
             document.body.style.overflow = 'unset';
         }
@@ -24,6 +29,35 @@ export default function Cart() {
         };
     }, [isOpen]);
 
+    const handleApplyCoupon = async () => {
+        if (!couponInput.trim()) return;
+        setIsApplyingCoupon(true);
+        setCouponError("");
+
+        try {
+            const res = await fetch("/api/coupons/apply", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ code: couponInput, cartTotal: subtotal() }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok && data.valid) {
+                applyCoupon({ code: data.code, discountPercent: data.discountPercent });
+                setCouponInput(""); // Clear input on success
+            } else {
+                setCouponError(data.error || "Invalid coupon");
+            }
+
+        } catch (error) {
+            console.error("Coupon error:", error);
+            setCouponError("Failed to apply coupon");
+        } finally {
+            setIsApplyingCoupon(false);
+        }
+    };
+
     const handleCheckout = async () => {
         setIsProcessing(true);
         try {
@@ -31,7 +65,7 @@ export default function Cart() {
             const res = await fetch("/api/payment/create-order", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ items }),
+                body: JSON.stringify({ items, couponCode: coupon?.code }), // Send coupon code
             });
 
             if (!res.ok) {
@@ -66,7 +100,8 @@ export default function Cart() {
                                 razorpay_payment_id: response.razorpay_payment_id,
                                 razorpay_order_id: response.razorpay_order_id,
                                 razorpay_signature: response.razorpay_signature,
-                                items, // Pass items strictly for context, real validation happens on server
+                                items,
+                                couponCode: coupon?.code // Pass here too for consistency check
                             }),
                         });
 
@@ -215,19 +250,49 @@ export default function Cart() {
                     <div className="p-6 border-t border-white/10 bg-black/40 space-y-4">
                         <div className="flex justify-between text-sm text-white">
                             <span className="text-white/50">Subtotal</span>
-                            <span className="font-bold">₹{total().toFixed(2)}</span>
+                            <span className="font-bold">₹{subtotal().toFixed(2)}</span>
                         </div>
-                        <div className="relative">
-                            <input
-                                className="w-full bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-doz-red focus:border-doz-red placeholder:text-white/20 text-white outline-none"
-                                placeholder="Discount Code"
-                                type="text"
-                            />
-                            <button className="absolute right-2 top-2 px-3 py-1 text-[10px] font-bold uppercase bg-white/10 hover:bg-white/20 rounded transition-colors text-white">
-                                Apply
-                            </button>
-                        </div>
-                        <div className="flex justify-between items-end pt-2">
+
+                        {/* Coupon Section */}
+                        {coupon ? (
+                            <div className="flex items-center justify-between bg-doz-red/10 border border-doz-red/20 rounded-lg p-3">
+                                <div className="flex items-center gap-2">
+                                    <Tag className="h-4 w-4 text-doz-red" />
+                                    <div>
+                                        <p className="text-xs font-bold text-white uppercase">{coupon.code}</p>
+                                        <p className="text-[10px] text-doz-red">-{coupon.discountPercent}% Discount</p>
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="text-sm font-bold text-doz-red">-₹{coupon.discountAmount.toFixed(2)}</span>
+                                    <button onClick={removeCoupon} className="text-white/50 hover:text-white">
+                                        <X className="h-4 w-4" />
+                                    </button>
+                                </div>
+                            </div>
+                        ) : (
+                            <div className="relative">
+                                <input
+                                    className="w-full bg-white/5 border border-white/10 rounded-lg py-3 px-4 text-sm focus:ring-1 focus:ring-doz-red focus:border-doz-red placeholder:text-white/20 text-white outline-none"
+                                    placeholder="Discount Code"
+                                    type="text"
+                                    value={couponInput}
+                                    onChange={(e) => setCouponInput(e.target.value)}
+                                    // Handle Enter key
+                                    onKeyDown={(e) => e.key === 'Enter' && handleApplyCoupon()}
+                                />
+                                <button
+                                    onClick={handleApplyCoupon}
+                                    disabled={isApplyingCoupon || !couponInput.trim()}
+                                    className="absolute right-2 top-2 px-3 py-1 text-[10px] font-bold uppercase bg-white/10 hover:bg-white/20 rounded transition-colors text-white disabled:opacity-50"
+                                >
+                                    {isApplyingCoupon ? <Loader2 className="animate-spin h-3 w-3" /> : 'Apply'}
+                                </button>
+                            </div>
+                        )}
+                        {couponError && <p className="text-xs text-red-500 font-medium pl-1">{couponError}</p>}
+
+                        <div className="flex justify-between items-end pt-2 border-t border-white/10">
                             <span className="text-sm font-bold uppercase tracking-widest text-white/50">Total</span>
                             <span className="text-3xl font-black tracking-tight text-white">₹{total().toFixed(2)}</span>
                         </div>

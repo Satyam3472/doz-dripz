@@ -83,6 +83,29 @@ async function seed() {
         console.log('Licenses already exist, skipping license seed.');
     }
 
+    // Seed Coupons
+    const existingCoupons = db.prepare('SELECT count(*) as count FROM coupons').get() as { count: number };
+    if (existingCoupons.count === 0) {
+        console.log('Seeding coupons...');
+        const coupons = [
+            { code: 'WELCOME10', discountPercent: 10, expiresAt: '2030-01-01' },
+            { code: 'DOZ20', discountPercent: 20, expiresAt: '2030-01-01' },
+            { code: 'BEATS30', discountPercent: 30, expiresAt: '2030-01-01' },
+        ];
+
+        const insertCoupon = db.prepare(`
+            INSERT INTO coupons (code, discountPercent, expiresAt)
+            VALUES (?, ?, ?)
+        `);
+
+        for (const c of coupons) {
+            insertCoupon.run(c.code, c.discountPercent, c.expiresAt);
+            console.log(`Inserted coupon: ${c.code}`);
+        }
+    } else {
+        console.log('Coupons already exist, skipping coupon seed.');
+    }
+
     console.log('Seeding complete.');
 }
 

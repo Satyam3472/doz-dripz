@@ -230,9 +230,30 @@ db.exec(`
         licenseType TEXT NOT NULL, -- MP3, WAV, STEMS, UNLIMITED, EXCLUSIVE
         price REAL NOT NULL,
         isActive INTEGER DEFAULT 1,
+        contractFeatures TEXT, -- JSON array
         FOREIGN KEY (trackId) REFERENCES tracks(id) ON DELETE CASCADE
     );
 `);
+
+// Migration: Add contractFeatures if missing
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(track_licenses)").all() as any[];
+  const hasFeatures = tableInfo.some(col => col.name === 'contractFeatures');
+  if (!hasFeatures) {
+    console.log('Migrating track_licenses: Adding contractFeatures...');
+    db.exec("ALTER TABLE track_licenses ADD COLUMN contractFeatures TEXT;");
+  }
+} catch (e) { console.error(e); }
+
+// Migration: Add coverArtUrl if missing (aliasing thumbnail_url or new col)
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(tracks)").all() as any[];
+  const hasCover = tableInfo.some(col => col.name === 'coverArtUrl');
+  if (!hasCover) {
+    console.log('Migrating tracks: Adding coverArtUrl...');
+    db.exec("ALTER TABLE tracks ADD COLUMN coverArtUrl TEXT;");
+  }
+} catch (e) { console.error(e); }
 
 // Indexes for new tables
 db.exec(`
@@ -240,5 +261,67 @@ db.exec(`
     CREATE INDEX IF NOT EXISTS idx_purchases_user ON purchases(userId);
     CREATE INDEX IF NOT EXISTS idx_track_licenses_track ON track_licenses(trackId);
 `);
+
+// COUPONS TABLE
+db.exec(`
+    CREATE TABLE IF NOT EXISTS coupons (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        code TEXT UNIQUE NOT NULL,
+        discountPercent INTEGER NOT NULL,
+        isActive INTEGER DEFAULT 1,
+        expiresAt DATETIME,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+`);
+
+// Migration: Add coupon fields to payments if missing
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(payments)").all() as any[];
+  const hasCouponCode = tableInfo.some(col => col.name === 'couponCode');
+
+  if (!hasCouponCode) {
+    console.log('Migrating payments table: Adding coupon columns...');
+    db.exec("ALTER TABLE payments ADD COLUMN couponCode TEXT;");
+    db.exec("ALTER TABLE payments ADD COLUMN discountAmount INTEGER;");
+  }
+} catch (error) {
+  console.error('Error migrating payments schema:', error);
+}
+
+// CONTACT MESSAGES TABLE
+db.exec(`
+    CREATE TABLE IF NOT EXISTS contact_messages (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        email TEXT NOT NULL,
+        message TEXT NOT NULL,
+        phonenumber TEXT,
+        createdAt DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+`);
+
+// Migration: Update licenses table (admin editable)
+try {
+  const tableInfo = db.prepare("PRAGMA table_info(licenses)").all() as any[];
+  const hasSubtitle = tableInfo.some(col => col.name === 'subtitle');
+
+  if (!hasSubtitle) {
+    console.log('Migrating licenses table: Adding new columns...');
+    db.exec("ALTER TABLE licenses ADD COLUMN subtitle TEXT;");
+    db.exec("ALTER TABLE licenses ADD COLUMN priceType TEXT DEFAULT 'fixed';"); // fixed, starting, hidden
+    db.exec("ALTER TABLE licenses ADD COLUMN isPopular INTEGER DEFAULT 0;");
+    db.exec("ALTER TABLE licenses ADD COLUMN isActive INTEGER DEFAULT 1;");
+    db.exec("ALTER TABLE licenses ADD COLUMN ctaText TEXT DEFAULT 'Buy Now';");
+    db.exec("ALTER TABLE licenses ADD COLUMN sortOrder INTEGER DEFAULT 0;");
+  }
+
+  const hasDetails = tableInfo.some(col => col.name === 'details');
+  if (!hasDetails) {
+    console.log('Migrating licenses table: Adding details column...');
+    db.exec("ALTER TABLE licenses ADD COLUMN details TEXT;");
+  }
+} catch (error) {
+  console.error('Error migrating licenses schema:', error);
+}
 
 export default db

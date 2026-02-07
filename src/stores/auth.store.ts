@@ -7,6 +7,7 @@ interface AuthState {
         email: string;
         firstName: string;
         lastName: string;
+        role: string;
     }
     login: (user: AuthState['user']) => void
     logout: () => void

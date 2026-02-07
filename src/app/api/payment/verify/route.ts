@@ -34,6 +34,7 @@ export async function POST(req: Request) {
             razorpay_payment_id,
             razorpay_signature,
             items,
+            couponCode // Optional
         } = await req.json();
 
         if (
@@ -85,7 +86,22 @@ export async function POST(req: Request) {
             }
         }
 
-        const calculatedAmountInPaise = Math.round(calculatedTotal * 100);
+        // Apply Coupon Logic (MUST MATCH Create Order logic)
+        let discountAmount = 0;
+        let finalDbCouponCode = null;
+
+        if (couponCode) {
+            const coupon = db.prepare('SELECT * FROM coupons WHERE code = ?').get(couponCode.toUpperCase()) as any;
+            // We can be slightly more lenient here if it expired successfully during the transaction flow, but usually stricter is better.
+            // However, for verify we mostly care that the amount matches what was paid.
+            if (coupon) {
+                discountAmount = Math.floor(calculatedTotal * (coupon.discountPercent / 100));
+                finalDbCouponCode = coupon.code;
+            }
+        }
+
+        const finalAmount = Math.max(0, calculatedTotal - discountAmount);
+        const calculatedAmountInPaise = Math.round(finalAmount * 100);
 
         // Allow for small floating point differences? Integers should be exact.
         // Razorpay order.amount is in paise (integer).
@@ -126,8 +142,8 @@ export async function POST(req: Request) {
         // We need trackName and fileUrl (audioUrl)
 
         const insertPayment = db.prepare(`
-      INSERT INTO payments (userId, razorpayOrderId, razorpayPaymentId, amount, currency, status)
-      VALUES (?, ?, ?, ?, ?, ?)
+      INSERT INTO payments (userId, razorpayOrderId, razorpayPaymentId, amount, currency, status, couponCode, discountAmount)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?)
     `);
 
         const insertPurchase = db.prepare(`
@@ -142,7 +158,9 @@ export async function POST(req: Request) {
                 razorpay_payment_id,
                 order.amount, // Using order.amount from Razorpay fetch which is in paise
                 "INR",
-                "SUCCESS"
+                "SUCCESS",
+                finalDbCouponCode,
+                discountAmount
             );
 
             for (const item of items) {

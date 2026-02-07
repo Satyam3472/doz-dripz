@@ -1,114 +1,132 @@
+
 import { NextResponse } from "next/server";
 import db from "@/app/lib/db";
-import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
+import crypto from "crypto";
+
+export const runtime = "nodejs"; // Required for file system ops
 
 // Helper to save file
-async function saveFile(file: File, subDir: string): Promise<string> {
+async function saveFile(file: File, folder: string): Promise<string> {
     const bytes = await file.arrayBuffer();
     const buffer = Buffer.from(bytes);
 
-    // Ensure unique filename
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    const filename = uniqueSuffix + '-' + file.name.replace(/[^a-zA-Z0-9.-]/g, '');
-
-    const uploadDir = path.join(process.cwd(), "public", "uploads", subDir);
+    // Ensure directory exists
+    const uploadDir = path.join(process.cwd(), "public", "uploads", folder);
     await mkdir(uploadDir, { recursive: true });
 
-    const filePath = path.join(uploadDir, filename);
-    await writeFile(filePath, buffer);
+    // Generate unique name
+    const ext = path.extname(file.name);
+    const filename = `${crypto.randomUUID()}${ext}`;
+    const filepath = path.join(uploadDir, filename);
 
-    return `/uploads/${subDir}/${filename}`;
+    await writeFile(filepath, buffer);
+    return `/uploads/${folder}/${filename}`;
 }
 
-export async function GET(req: Request) {
+// GET: List all tracks (Admin view)
+export async function GET() {
     try {
-        // Auth Check
-        const cookieStore = await cookies();
-        const sessionId = cookieStore.get("session")?.value;
-        if (!sessionId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        const tracks = db.prepare(`
+            SELECT * FROM tracks ORDER BY created_at DESC
+        `).all();
 
-        const session = db.prepare("SELECT users.role FROM sessions JOIN users ON sessions.user_id = users.id WHERE sessions.id = ?").get(sessionId) as { role: string };
-        if (!session || (session.role !== 'ADMIN' && session.role !== 'MUSICIAN')) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
-        const tracks = db.prepare("SELECT * FROM tracks ORDER BY created_at DESC").all();
-        // Include licenses?
-        // For list view, maybe just base info is fine.
-
-        return NextResponse.json({ tracks });
+        return NextResponse.json(tracks);
     } catch (error) {
-        console.error("Admin Tracks GET Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        console.error("Error fetching admin tracks:", error);
+        return NextResponse.json({ error: "Failed to fetch tracks" }, { status: 500 });
     }
 }
 
+// POST: Create new track
 export async function POST(req: Request) {
     try {
-        // Auth Check
-        const cookieStore = await cookies();
-        const sessionId = cookieStore.get("session")?.value;
-        if (!sessionId) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-
-        const session = db.prepare("SELECT users.role FROM sessions JOIN users ON sessions.user_id = users.id WHERE sessions.id = ?").get(sessionId) as { role: string };
-        if (!session || (session.role !== 'ADMIN' && session.role !== 'MUSICIAN')) {
-            return NextResponse.json({ error: "Forbidden" }, { status: 403 });
-        }
-
         const formData = await req.formData();
-        const title = formData.get("title") as string;
-        const artist = formData.get("artist") as string; // defaults to 'DOZ DRIPZ' in frontend maybe?
-        const bpm = formData.get("bpm") ? Number(formData.get("bpm")) : null;
-        const key = formData.get("key") as string;
-        const tags = formData.get("tags") as string; // JSON string
-        const price = 0; // Base price obsolete? Or use for default? Let's use 0.
 
+        // Extract fields
+        const title = formData.get("title") as string;
+        const artist = formData.get("artist") as string || "DOZ DRIPZ";
+        const bpm = parseInt(formData.get("bpm") as string) || 0;
+        const tags = formData.get("tags") as string; // JSON string
+        const licensesStr = formData.get("licenses") as string; // JSON string of [{type, price}]
+        const genre = formData.get("genre") as string || "Trap";
+
+        // Files
         const coverFile = formData.get("cover") as File | null;
         const audioFile = formData.get("audio") as File | null;
 
         if (!title || !audioFile) {
-            return NextResponse.json({ error: "Missing required fields" }, { status: 400 });
+            return NextResponse.json({ error: "Title and Audio File are required" }, { status: 400 });
         }
 
-        // Handle File Uploads
-        let coverUrl = null;
+        // Save Files
+        let coverUrl = "";
+        let audioUrl = "";
+
         if (coverFile) {
             coverUrl = await saveFile(coverFile, "covers");
         }
 
-        const audioUrl = await saveFile(audioFile, "audio");
-
-        // Insert Track
-        const insertStmt = db.prepare(`
-            INSERT INTO tracks (title, artist, bpm, key, tags, thumbnail_url, audio_url, price, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'ACTIVE')
-        `);
-
-        const result = insertStmt.run(title, artist || 'DOZ DRIPZ', bpm, key, tags, coverUrl, audioUrl, price);
-        const trackId = result.lastInsertRowid;
-
-        // Handle Licenses
-        const licensesJson = formData.get("licenses") as string; // JSON string from frontend
-        if (licensesJson) {
-            const licenses = JSON.parse(licensesJson);
-            const insertLicense = db.prepare(`
-                INSERT INTO track_licenses (trackId, licenseType, price)
-                VALUES (?, ?, ?)
-            `);
-
-            const insertMany = db.transaction((items) => {
-                for (const item of items) insertLicense.run(trackId, item.type, item.price);
-            });
-
-            insertMany(licenses);
+        if (audioFile) {
+            audioUrl = await saveFile(audioFile, "audio");
         }
 
-        return NextResponse.json({ success: true, trackId });
+        // Database Transaction
+        const insertTrack = db.transaction(() => {
+            // 1. Insert Track
+            const stmt = db.prepare(`
+                INSERT INTO tracks (title, artist, bpm, tags, genre, coverArtUrl, audio_url, status, created_at, updated_at)
+                VALUES (@title, @artist, @bpm, @tags, @genre, @coverArtUrl, @audio_url, 'PUBLISHED', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+            `);
+
+            const info = stmt.run({
+                title,
+                artist,
+                bpm,
+                tags,
+                genre,
+                coverArtUrl: coverUrl,
+                audio_url: audioUrl
+            });
+
+            const trackId = info.lastInsertRowid;
+
+            // 2. Insert Licenses
+            if (licensesStr) {
+                const licenses = JSON.parse(licensesStr); // [{type, price}]
+
+                const dbLicenses = db.prepare("SELECT * FROM licenses").all() as any[];
+
+                const licStmt = db.prepare(`
+                    INSERT INTO track_licenses (trackId, licenseType, price, isActive, contractFeatures)
+                    VALUES (@trackId, @licenseType, @price, 1, @contractFeatures)
+                `);
+
+                for (const lic of licenses) {
+                    // Find default features for this license type
+                    const defaultLic = dbLicenses.find(l => l.name === lic.type);
+                    const features = defaultLic ? defaultLic.features : "[]"; // defaultLic.features is JSON string in DB
+
+                    licStmt.run({
+                        trackId,
+                        licenseType: lic.type,
+                        price: lic.price,
+                        contractFeatures: features
+                    });
+                }
+            }
+
+            return trackId;
+        });
+
+        const newTrackId = insertTrack();
+
+        return NextResponse.json({ success: true, trackId: newTrackId });
 
     } catch (error) {
-        console.error("Admin Track Create Error:", error);
-        return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+        console.error("Error creating track:", error);
+        return NextResponse.json({ error: "Failed to create track" }, { status: 500 });
     }
 }

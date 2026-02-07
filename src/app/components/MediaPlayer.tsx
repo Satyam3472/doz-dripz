@@ -97,7 +97,7 @@ export default function MediaPlayer() {
                 {barStyles.map((style, i) => (
                     <div
                         key={i}
-                        className={`w-1.5 rounded-full bg-doz-red transition-all duration-300 ${isPlaying ? 'animate-wave' : ''}`}
+                        className={`w-1.5 rounded-full bg-doz-red transition-all duration-300 ${isPlaying ? 'animate-wave' : ''} ${i % 2 !== 0 ? 'hidden md:block' : ''}`}
                         style={style}
                     />
                 ))}
@@ -120,7 +120,7 @@ export default function MediaPlayer() {
                 {barStyles.map((style, i) => (
                     <div
                         key={i}
-                        className={`w-1.5 rounded-full bg-doz-red transition-all duration-300 ${isPlaying ? 'animate-wave' : ''}`}
+                        className={`w-1.5 rounded-full bg-doz-red transition-all duration-300 ${isPlaying ? 'animate-wave' : ''} ${i % 2 !== 0 ? 'hidden md:block' : ''}`}
                         style={style}
                     />
                 ))}
