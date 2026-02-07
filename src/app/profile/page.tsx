@@ -7,10 +7,10 @@ import profile from "../assets/profile.jpg";
 export default function ProfilePage() {
     return (
         <main className="min-h-screen bg-background-dark text-white pb-20">
-            <section className="relative mx-auto max-w-[1200px] px-6 py-24">
-                <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 items-start">
+            <section className="relative mx-auto max-w-[1200px] px-6 py-10 sm:py-16 md:py-24">
+                <div className="grid grid-cols-1 gap-8 sm:gap-12 lg:gap-16 lg:grid-cols-12 items-start">
                     {/* Left Column */}
-                    <div className="lg:col-span-7 space-y-16">
+                    <div className="lg:col-span-7 space-y-10 sm:space-y-16">
                         {/* Header Section */}
                         <div className="space-y-6">
                             <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-4 py-1 text-xs font-bold uppercase tracking-widest text-primary">
@@ -20,7 +20,7 @@ export default function ProfilePage() {
                                 </span>
                                 Industry Leader
                             </div>
-                            <h2 className="text-6xl font-black italic tracking-tighter text-white uppercase leading-tight lg:text-7xl">
+                            <h2 className="text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black italic tracking-tighter text-white uppercase leading-tight">
                                 The Sound of <br />
                                 <span className="text-primary drop-shadow-[0_0_15px_rgba(239,68,68,0.3)]">
                                     Tomorrow.
@@ -39,17 +39,10 @@ export default function ProfilePage() {
                         {/* Streaming Section */}
                         <div className="space-y-6">
                             <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Streaming On</h3>
-                            <div className="flex flex-wrap items-center gap-10 opacity-40 grayscale transition-all hover:grayscale-0 hover:opacity-100">
-                                {/* Using placeholder images or SVGs usually, sticking to img tags for transparency if available, otherwise just text/icons */}
-                                {/* Since the data URIs were long, I will substitute with simple text or generic icons for now to keep it clean, or try to render something simple. 
-                                    Actually, I'll use simple text labels or Lucide icons for now if the actual SVGs aren't available, but the prompt provided data URIs. 
-                                    I will copy the data URIs provided in the prompt if possible, or shorten them if they are too long. 
-                                    The prompt had base64 images. I will try to keep them if they are reasonable, but for code brevity here I might just use placeholders or icons. 
-                                    Let's use Lucide icons or text for platforms to avoid massive base64 strings in the code file unless strictly necessary. 
-                                    The user wants COMPACT responsive design. I will use text/icons for cleanliness. */}
-                                <div className="flex items-center gap-2 text-xl font-bold"><Disc size={32} /> Spotify</div>
-                                <div className="flex items-center gap-2 text-xl font-bold"><Disc size={32} /> Apple Music</div>
-                                <div className="flex items-center gap-2 text-xl font-bold"><Disc size={32} /> YouTube</div>
+                            <div className="flex flex-wrap items-center gap-6 sm:gap-10 opacity-70 sm:opacity-40 grayscale transition-all hover:grayscale-0 hover:opacity-100">
+                                <div className="flex items-center gap-2 text-lg sm:text-xl font-bold"><Disc className="h-6 w-6 sm:h-8 sm:w-8" /> Spotify</div>
+                                <div className="flex items-center gap-2 text-lg sm:text-xl font-bold"><Disc className="h-6 w-6 sm:h-8 sm:w-8" /> Apple Music</div>
+                                <div className="flex items-center gap-2 text-lg sm:text-xl font-bold"><Disc className="h-6 w-6 sm:h-8 sm:w-8" /> YouTube</div>
                             </div>
                         </div>
 
@@ -57,9 +50,9 @@ export default function ProfilePage() {
                         <div className="space-y-8">
                             <h3 className="text-xs font-bold uppercase tracking-[0.2em] text-slate-500">Core Expertise</h3>
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-8">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
-                                        <Disc className="text-primary h-6 w-6" />
+                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-5 sm:p-8">
+                                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
+                                        <Disc className="text-primary h-5 w-5 sm:h-6 sm:w-6" />
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-bold text-white">Music Production</h4>
@@ -68,9 +61,9 @@ export default function ProfilePage() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-8">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
-                                        <Sliders className="text-primary h-6 w-6" />
+                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-5 sm:p-8">
+                                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
+                                        <Sliders className="text-primary h-5 w-5 sm:h-6 sm:w-6" />
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-bold text-white">Mixing &amp; Mastering</h4>
@@ -79,9 +72,9 @@ export default function ProfilePage() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-8">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
-                                        <AudioWaveform className="text-primary h-6 w-6" />
+                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-5 sm:p-8">
+                                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
+                                        <AudioWaveform className="text-primary h-5 w-5 sm:h-6 sm:w-6" />
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-bold text-white">Sound Design</h4>
@@ -90,9 +83,9 @@ export default function ProfilePage() {
                                         </p>
                                     </div>
                                 </div>
-                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-8">
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
-                                        <Brush className="text-primary h-6 w-6" />
+                                <div className="glass-card group flex flex-col gap-4 rounded-2xl p-5 sm:p-8">
+                                    <div className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-xl bg-white/5 group-hover:bg-primary/20 transition-colors">
+                                        <Brush className="text-primary h-5 w-5 sm:h-6 sm:w-6" />
                                     </div>
                                     <div>
                                         <h4 className="text-lg font-bold text-white">Art Direction</h4>
@@ -106,7 +99,7 @@ export default function ProfilePage() {
                     </div>
 
                     {/* Right Column (Profile Image) */}
-                    <div className="lg:col-span-5 lg:sticky lg:top-32">
+                    <div className="order-first lg:col-span-5 lg:sticky lg:top-32 lg:order-none">
                         <div className="relative group">
                             <div className="absolute -inset-1 rounded-[3rem] bg-gradient-to-b from-primary/20 to-transparent opacity-50 blur-2xl transition duration-1000 group-hover:opacity-75"></div>
                             <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-[#0c0910] p-2 shadow-2xl">
@@ -133,15 +126,15 @@ export default function ProfilePage() {
                                     <p className="mt-3 text-xs font-black uppercase tracking-[0.3em] text-primary">
                                         Founder &amp; Visionary
                                     </p>
-                                    <div className="mt-10 flex justify-center gap-4">
-                                        <a href="#" className="flex h-12 w-12 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-primary hover:border-primary group/icon">
-                                            <PlayCircle className="text-xl text-white transition-transform group-hover/icon:scale-110" />
+                                    <div className="mt-8 sm:mt-10 flex justify-center gap-4">
+                                        <a href="#" className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-primary hover:border-primary group/icon">
+                                            <PlayCircle className="text-lg sm:text-xl text-white transition-transform group-hover/icon:scale-110" />
                                         </a>
-                                        <a href="#" className="flex h-12 w-12 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-primary hover:border-primary group/icon">
-                                            <Mic className="text-xl text-white transition-transform group-hover/icon:scale-110" />
+                                        <a href="#" className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-primary hover:border-primary group/icon">
+                                            <Mic className="text-lg sm:text-xl text-white transition-transform group-hover/icon:scale-110" />
                                         </a>
-                                        <a href="#" className="flex h-12 w-12 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-primary hover:border-primary group/icon">
-                                            <Share2 className="text-xl text-white transition-transform group-hover/icon:scale-110" />
+                                        <a href="#" className="flex h-10 w-10 sm:h-12 sm:w-12 items-center justify-center rounded-full border border-white/5 bg-white/5 transition-all hover:bg-primary hover:border-primary group/icon">
+                                            <Share2 className="text-lg sm:text-xl text-white transition-transform group-hover/icon:scale-110" />
                                         </a>
                                     </div>
                                     <div className="mt-10 grid grid-cols-2 gap-4 border-t border-white/5 pt-10">

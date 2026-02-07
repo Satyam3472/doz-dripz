@@ -29,11 +29,14 @@
 
   /* User requested colors */
   --color-primary: #E31B23;
+  --color-brand-red: #E31B23;
   --color-doz-red: #E31B23;
   --color-doz-grey: #BDBDBD;
   --color-background-light: #f7f6f8;
-  --color-background-dark: #0a0a0a;
-  --color-card-dark: #1a1a1a;
+  --color-background-dark: #0A0A0B;
+  --color-card-dark: #161618;
+  --color-charcoal: #0F0F11;
+  --color-charcoal-light: #1A1A1D;
 
   --font-display: var(--font-spline-sans), "Spline Sans", sans-serif;
 }
@@ -143,5 +146,18 @@
 
   .glass-card {
     @apply backdrop-blur-md bg-white/5 border border-white/10;
+  }
+
+  .text-glow-red {
+    text-shadow: 0 0 20px rgba(227, 27, 35, 0.4);
+  }
+
+  .waveform-bar {
+    @apply w-1 rounded-full transition-all duration-300;
+    background-color: rgba(227, 27, 35, 0.3);
+  }
+
+  .waveform-bar.active {
+    @apply bg-brand-red;
   }
 }

@@ -253,6 +253,12 @@ try {
     console.log('Migrating tracks: Adding coverArtUrl...');
     db.exec("ALTER TABLE tracks ADD COLUMN coverArtUrl TEXT;");
   }
+
+  const hasGenre = tableInfo.some(col => col.name === 'genre');
+  if (!hasGenre) {
+    console.log('Migrating tracks: Adding genre...');
+    db.exec("ALTER TABLE tracks ADD COLUMN genre TEXT DEFAULT 'Trap';");
+  }
 } catch (e) { console.error(e); }
 
 // Indexes for new tables

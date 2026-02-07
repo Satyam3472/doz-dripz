@@ -13,9 +13,18 @@ export interface CartItem {
 
 interface CartState {
     items: CartItem[]
+    isOpen: boolean
     coupon: { code: string; discountPercent: number; discountAmount: number } | null
+    addItem: (item: CartItem) => void
+    removeItem: (trackId: number) => void
+    clearCart: () => void
+    total: () => number
+    subtotal: () => number
     applyCoupon: (data: { code: string; discountPercent: number }) => void
     removeCoupon: () => void
+    toggleCart: () => void
+    openCart: () => void
+    closeCart: () => void
 }
 
 export const useCartStore = create<CartState>()(

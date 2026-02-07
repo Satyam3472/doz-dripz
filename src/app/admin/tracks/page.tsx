@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { Plus, MoreVertical, Search } from "lucide-react";
+import { Plus, MoreVertical, Search, Edit2 } from "lucide-react";
 
 export default function AdminTracksPage() {
     const [tracks, setTracks] = useState<any[]>([]);
@@ -17,7 +17,11 @@ export default function AdminTracksPage() {
         try {
             const res = await fetch("/api/admin/tracks");
             const data = await res.json();
-            if (data.tracks) setTracks(data.tracks);
+            if (Array.isArray(data)) {
+                setTracks(data);
+            } else if (data.tracks) {
+                setTracks(data.tracks);
+            }
         } catch (error) {
             console.error(error);
         } finally {
@@ -59,8 +63,8 @@ export default function AdminTracksPage() {
                                 <td className="px-6 py-4">
                                     <div className="flex items-center gap-4">
                                         <div className="h-12 w-12 rounded-lg bg-zinc-800 relative overflow-hidden flex-shrink-0 border border-white/5">
-                                            {track.thumbnail_url && <Image src={track.thumbnail_url} alt={track.title} fill className="object-cover" />}
-                                            {!track.thumbnail_url && <div className="h-full w-full flex items-center justify-center bg-zinc-900 text-white/20">?</div>}
+                                            {(track.coverArtUrl || track.thumbnail_url) && <Image src={track.coverArtUrl || track.thumbnail_url} alt={track.title} fill className="object-cover" />}
+                                            {(!track.coverArtUrl && !track.thumbnail_url) && <div className="h-full w-full flex items-center justify-center bg-zinc-900 text-white/20">?</div>}
                                         </div>
                                         <div>
                                             <h3 className="font-bold text-white text-sm">{track.title}</h3>
@@ -83,9 +87,11 @@ export default function AdminTracksPage() {
                                     {new Date(track.created_at).toLocaleDateString()}
                                 </td>
                                 <td className="px-6 py-4 text-right">
-                                    <button className="text-[#A3A3A3] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg">
-                                        <MoreVertical size={18} />
-                                    </button>
+                                    <div className="flex items-center justify-end gap-2">
+                                        <Link href={`/admin/tracks/${track.id}/edit`} className="text-[#A3A3A3] hover:text-white transition-colors p-2 hover:bg-white/5 rounded-lg">
+                                            <Edit2 size={18} />
+                                        </Link>
+                                    </div>
                                 </td>
                             </tr>
                         ))}
@@ -99,16 +105,17 @@ export default function AdminTracksPage() {
                             <div className="flex items-start justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="h-14 w-14 rounded-lg bg-zinc-800 relative overflow-hidden flex-shrink-0 border border-white/5">
-                                        {track.thumbnail_url && <Image src={track.thumbnail_url} alt={track.title} fill className="object-cover" />}
+                                        {(track.coverArtUrl || track.thumbnail_url) && <Image src={track.coverArtUrl || track.thumbnail_url} alt={track.title} fill className="object-cover" />}
+                                        {(!track.coverArtUrl && !track.thumbnail_url) && <div className="h-full w-full flex items-center justify-center bg-zinc-900 text-white/20">?</div>}
                                     </div>
                                     <div>
                                         <h3 className="font-bold text-white text-base">{track.title}</h3>
                                         <p className="text-xs text-[#A3A3A3] font-bold tracking-wide">{track.artist}</p>
                                     </div>
                                 </div>
-                                <button className="text-[#A3A3A3] hover:text-white p-2">
-                                    <MoreVertical size={20} />
-                                </button>
+                                <Link href={`/admin/tracks/${track.id}/edit`} className="text-[#A3A3A3] hover:text-white p-2">
+                                    <Edit2 size={20} />
+                                </Link>
                             </div>
 
                             <div className="flex items-center gap-2">

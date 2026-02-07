@@ -1,20 +1,26 @@
 import db from '../db'
 
 export const getAllTracks = () => {
-    const rows = db.prepare(`SELECT * FROM tracks`).all()
-    return rows.map((t: any) => ({
-        ...t,
-        id: t.id,
-        title: t.title,
-        artist: t.artist,
-        bpm: t.bpm,
-        duration: formatDuration(t.duration), // Convert seconds back to MM:SS if needed, or handle in UI
-        tags: JSON.parse(t.tags || '[]'),
-        cover: t.thumbnail_url, // Map DB column to UI prop
-        audioUrl: t.audio_url,
-        price: t.price,
-        featured: Boolean(t.featured),
-    }))
+    const rows = db.prepare(`SELECT * FROM tracks ORDER BY created_at DESC`).all()
+    const licenses = db.prepare(`SELECT * FROM track_licenses WHERE isActive = 1`).all()
+
+    return rows.map((t: any) => {
+        const trackLicenses = licenses.filter((l: any) => l.trackId === t.id);
+        return {
+            ...t,
+            id: t.id,
+            title: t.title,
+            artist: t.artist,
+            bpm: t.bpm,
+            duration: t.duration, // Keep as number for now, format in UI
+            tags: JSON.parse(t.tags || '[]'),
+            cover: t.coverArtUrl || t.thumbnail_url, // Prefer coverArtUrl
+            audioUrl: t.audio_url,
+            price: t.price,
+            featured: Boolean(t.featured),
+            licenses: trackLicenses
+        }
+    })
 }
 
 // Helper to format seconds to MM:SS

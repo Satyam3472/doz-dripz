@@ -1,11 +1,12 @@
 "use client"
-import { Search, Play, Download, Share2, Pause, ShoppingBag, ChevronDown } from "lucide-react";
+import { Search, Play, Download, Share2, Pause, ShoppingBag, ChevronDown, Plus, CirclePlus } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import MediaPlayer from "./MediaPlayer";
 import LicensingModal from "./LicensingModal";
 import { usePlayerStore } from "@/stores/player.store";
 import { useCartStore } from "@/stores/cart.store";
+import { formatDuration } from "@/app/lib/utils";
 
 interface AllTracksProps {
     initialTracks: any[];
@@ -34,6 +35,30 @@ export default function FeaturedBeatsTable({ initialTracks }: AllTracksProps) {
         setModalOpen(true);
     };
 
+    const handleShare = async (track: any) => {
+        const shareUrl = `${window.location.origin}/track/${track.id}`;
+        const shareData = {
+            title: track.title,
+            text: `Check out ${track.title} by ${track.artist} on DOZ DRIPZ`,
+            url: shareUrl,
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                console.error("Error sharing:", err);
+            }
+        } else {
+            try {
+                await navigator.clipboard.writeText(shareUrl);
+                alert("Link copied to clipboard!");
+            } catch (err) {
+                console.error("Failed to copy:", err);
+            }
+        }
+    };
+
     return (
         <div className="text-white w-full">
             <section className="mx-auto">
@@ -55,13 +80,8 @@ export default function FeaturedBeatsTable({ initialTracks }: AllTracksProps) {
                             return (
                                 <div key={track.id} className={`group grid grid-cols-[auto_1fr_auto] items-center gap-3 px-4 py-3 transition-colors hover:bg-white/[0.02] md:grid-cols-[auto_1fr_auto_auto_auto_auto] md:gap-4 md:px-6 ${isCurrent ? 'bg-white/[0.04]' : ''}`}>
                                     <div className="group/cover relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg bg-white/10">
-                                        <Image
-                                            alt={track.title}
-                                            width={48}
-                                            height={48}
-                                            className={`h-full w-full object-cover transition-transform duration-500 ${isTrackPlaying ? 'scale-110' : ''}`}
-                                            src={track.cover}
-                                        />
+                                        {(track.coverArtUrl || track.thumbnail_url) && <Image src={track.coverArtUrl || track.thumbnail_url} alt={track.title} fill className={`h-full w-full object-cover transition-transform duration-500 ${isTrackPlaying ? 'scale-110' : ''}`} />}
+                                        {(!track.coverArtUrl && !track.thumbnail_url) && <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-white/20">?</div>}
                                         <div
                                             onClick={() => handlePlay(track)}
                                             className={`cursor-pointer absolute inset-0 flex items-center justify-center bg-black/40 transition-opacity ${isTrackPlaying ? 'opacity-100' : 'opacity-0 group-hover/cover:opacity-100'}`}
@@ -79,7 +99,7 @@ export default function FeaturedBeatsTable({ initialTracks }: AllTracksProps) {
                                         </div>
                                         <div className="truncate text-xs text-white/50 md:hidden">{track.artist}</div>
                                     </div>
-                                    <div className="w-20 text-sm text-white/50 font-medium tabular-nums hidden md:block">{track.duration}</div>
+                                    <div className="w-20 text-sm text-white/50 font-medium tabular-nums hidden md:block">{formatDuration(track.duration)}</div>
                                     <div className="w-16 text-sm text-white/50 font-medium tabular-nums hidden md:block">{track.bpm}</div>
                                     <div className="w-48 flex-wrap gap-2 hidden md:flex">
                                         {track.tags.map((tag: any) => (
@@ -92,14 +112,23 @@ export default function FeaturedBeatsTable({ initialTracks }: AllTracksProps) {
                                         <button className="h-9 w-9 flex items-center justify-center rounded bg-[#1A1A1A] text-white/70 hover:text-white hover:bg-[#252525] transition-all">
                                             <Download size={16} />
                                         </button>
-                                        <button className="h-9 w-9 items-center justify-center rounded bg-[#1A1A1A] text-white/70 hover:text-white hover:bg-[#252525] transition-all hidden md:flex">
+                                        <button
+                                            onClick={() => handleShare(track)}
+                                            className="h-9 w-9 items-center justify-center rounded bg-[#1A1A1A] text-white/70 hover:text-white hover:bg-[#252525] transition-all hidden md:flex"
+                                        >
                                             <Share2 size={16} />
                                         </button>
                                         <button
                                             onClick={() => openLicensingModal(track)}
-                                            className="flex h-9 items-center gap-1.5 rounded bg-white px-4 text-xs font-bold text-black hover:bg-gray-200 transition-colors"
+                                            className="flex h-9 w-24 md:w-28 items-center justify-center gap-2 rounded bg-white px-2 text-xs font-bold text-black hover:bg-gray-200 transition-colors"
                                         >
-                                            <ShoppingBag size={14} /> <span className="hidden md:inline">₹{track.price}</span><span className="md:hidden">₹{Math.floor(track.price)}</span>
+                                            <div className="relative">
+                                                <ShoppingBag size={16} />
+                                                <span className="absolute -right-1 -top-1 flex items-center justify-center rounded-full bg-doz-red text-[10px] font-bold text-white">
+                                                    <CirclePlus size={10} className="text-white" strokeWidth={3} />
+                                                </span>
+                                            </div>
+                                            <span>₹{Math.floor(track.price)}</span>
                                         </button>
                                     </div>
                                 </div>

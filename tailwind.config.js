@@ -14,12 +14,12 @@ module.exports = {
                 "doz-grey": "#BDBDBD",
 
                 "background-light": "#f7f6f8",
-                "background-dark": "#0a0a0a",
+                "background-dark": "#0A0A0B", // Updated to match HTML
 
-                "card-dark": "#1a1a1a",
+                "card-dark": "#161618", // Updated to match HTML
                 "brand-red": "#E31B23",
-                "charcoal": "#27272a",
-                "charcoal-light": "#3f3f46",
+                "charcoal": "#0F0F11", // Updated to match HTML
+                "charcoal-light": "#1A1A1D", // Updated to match HTML
             },
             fontFamily: {
                 display: ["Spline Sans", "sans-serif"],

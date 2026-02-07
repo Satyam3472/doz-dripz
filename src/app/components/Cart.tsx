@@ -215,12 +215,16 @@ export default function Cart() {
                         items.map((item) => (
                             <div key={item.trackId} className="flex gap-4 group">
                                 <div className="h-20 w-20 flex-shrink-0 rounded-lg overflow-hidden border border-white/10 relative">
-                                    <Image
-                                        alt={`${item.title} cover`}
-                                        src={item.cover}
-                                        fill
-                                        className="object-cover"
-                                    />
+                                    {item.cover ? (
+                                        <Image
+                                            alt={`${item.title} cover`}
+                                            src={item.cover}
+                                            fill
+                                            className="object-cover"
+                                        />
+                                    ) : (
+                                        <div className="flex h-full w-full items-center justify-center bg-zinc-800 text-white/20">?</div>
+                                    )}
                                 </div>
                                 <div className="flex-1">
                                     <div className="flex justify-between">

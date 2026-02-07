@@ -1,5 +1,5 @@
 "use client"
-import { Play, Pause, SkipForward, SkipBack, Volume2, ShoppingBag } from "lucide-react";
+import { Play, Pause, SkipForward, SkipBack, Volume2, ShoppingBag, CirclePlus } from "lucide-react";
 import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import LicensingModal from "./LicensingModal";
@@ -106,7 +106,7 @@ export default function MediaPlayer() {
     }
 
     return (
-        <div className="relative z-10 flex w-full max-w-[960px] flex-col items-center gap-6 text-center transition-all duration-500 will-change-transform">
+        <div className="relative flex w-full max-w-[960px] flex-col items-center gap-6 text-center transition-all duration-500 will-change-transform">
             <audio
                 ref={audioRef}
                 src={currentTrack.audioUrl}
@@ -136,12 +136,16 @@ export default function MediaPlayer() {
                         <div
                             className="h-10 w-10 flex-shrink-0 rounded-lg border border-white/5 bg-cover bg-center shadow-lg md:h-12 md:w-12 relative overflow-hidden"
                         >
-                            <Image
-                                src={currentTrack.cover}
-                                alt={currentTrack.title}
-                                fill
-                                className="object-cover"
-                            />
+                            {currentTrack.cover ? (
+                                <Image
+                                    src={currentTrack.cover}
+                                    alt={currentTrack.title}
+                                    fill
+                                    className="object-cover"
+                                />
+                            ) : (
+                                <div className="h-full w-full bg-zinc-800 flex items-center justify-center text-white/20">?</div>
+                            )}
                         </div>
                         <div className="min-w-0 flex-1 text-left">
                             <h4 className="truncate text-sm font-bold tracking-tight text-white">
@@ -170,7 +174,13 @@ export default function MediaPlayer() {
                             onClick={openModal}
                             className="flex h-9 w-9 items-center justify-center rounded-lg bg-white text-black transition-all hover:bg-gray-200 active:scale-95"
                         >
-                            <ShoppingBag className="h-4 w-4" />
+                            <div className="relative">
+                                <ShoppingBag size={16} />
+                                <span className="absolute -right-1 -top-1 flex items-center justify-center rounded-full bg-doz-red text-[10px] font-bold text-white">
+                                    <CirclePlus size={10} className="text-white" strokeWidth={3} />
+                                </span>
+                            </div>
+
                         </button>
                     </div>
                 </div>

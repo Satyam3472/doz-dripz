@@ -77,7 +77,7 @@ export default function LicensingPlans() {
     if (loading) return null; // Or a skeleton
 
     return (
-        <section className="bg-[#050505] py-20 text-white ">
+        <section className="bg-[#050505] py-20 text-white">
             <div className="mx-auto max-w-[1000px] px-6">
                 <div className="mb-12 text-center">
                     <h2 className="text-4xl font-black uppercase tracking-tighter text-white">
@@ -115,7 +115,7 @@ export default function LicensingPlans() {
 
                         // Exact classes from original static version
                         const containerClasses = isPopular
-                            ? "relative min-w-[80%] snap-center rounded-xl bg-white p-8 text-black shadow-2xl sm:min-w-0 scale-100 md:scale-110 z-10"
+                            ? "relative min-w-[80%] snap-center rounded-xl bg-white p-8 text-black shadow-2xl sm:min-w-0 scale-100 md:scale-110"
                             : "min-w-[80%] snap-center rounded-xl border border-white/10 bg-transparent p-6 sm:min-w-0 transition-transform duration-300 scale-95 md:scale-100";
 
                         const titleClasses = `text-sm font-bold uppercase tracking-wide ${isPopular ? 'text-black' : 'text-white'}`;
